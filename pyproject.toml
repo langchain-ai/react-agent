@@ -1,0 +1,24 @@
+[tool.poetry]
+name = "react-agent"
+version = "0.0.1"
+description = "Starter template for making a custom Reasoning and Action agent (using tool calling) in LangGraph."
+authors = ["William Fu-Hinthorn <13333726+hinthornw@users.noreply.github.com>"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+langgraph = "^0.2.6"
+langchain-openai = "^0.1.22"
+langchain-anthropic = "^0.1.23"
+langchain = "^0.2.14"
+langchain-fireworks = "^0.1.7"
+python-dotenv = "^1.0.1"
+
+[tool.poetry.group.dev.dependencies]
+mypy = "^1.11.1"
+ruff = "^0.6.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
