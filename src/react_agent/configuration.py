@@ -14,7 +14,7 @@ class Configuration:
 
     system_prompt: str = "You are a helpful AI assistant.\nSystem time: {system_time}"
     model_name: Annotated[str, {"__template_metadata__": {"kind": "llm"}}] = (
-        "claude-3-5-sonnet-20240620"
+        "anthropic/claude-3-5-sonnet-20240620"
     )
     scraper_tool_model_name: Annotated[
         str, {"__template_metadata__": {"kind": "llm"}}
