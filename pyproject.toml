@@ -26,10 +26,10 @@ requires = ["setuptools>=73.0.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-packages = ["langgraph.templates.retrieval_graph", "retrieval_graph"]
+packages = ["langgraph.templates.react_agent", "react_agent"]
 [tool.setuptools.package-dir]
-"langgraph.templates.retrieval_graph" = "src/retrieval_graph"
-"retrieval_graph" = "src/retrieval_graph"
+"langgraph.templates.react_agent" = "src/react_agent"
+"react_agent" = "src/react_agent"
 
 
 [tool.setuptools.package-data]

@@ -4,7 +4,7 @@ Works with a chat model with tool calling support.
 """
 
 from datetime import datetime, timezone
-from typing import Literal
+from typing import Dict, List, Literal, cast
 
 from langchain.chat_models import init_chat_model
 from langchain_core.messages import AIMessage
@@ -20,7 +20,9 @@ from react_agent.tools import TOOLS
 # Define the function that calls the model
 
 
-async def call_model(state: State, config: RunnableConfig):
+async def call_model(
+    state: State, config: RunnableConfig
+) -> Dict[str, List[AIMessage]]:
     """Call the LLM powering our "agent".
 
     This function prepares the prompt, initializes the model, and processes the response.
@@ -36,22 +38,26 @@ async def call_model(state: State, config: RunnableConfig):
 
     # Create a prompt template. Customize this to change the agent's behavior.
     prompt = ChatPromptTemplate.from_messages(
-        [("system", configuration["system_prompt"]), ("placeholder", "{messages}")]
+        [("system", configuration.system_prompt), ("placeholder", "{messages}")]
     )
 
     # Initialize the model with tool binding. Change the model or add more tools here.
-    model = init_chat_model(configuration["model_name"]).bind_tools(TOOLS)
+    model = init_chat_model(configuration.model_name).bind_tools(TOOLS)
 
     # Prepare the input for the model, including the current system time
     message_value = await prompt.ainvoke(
-        {**state, "system_time": datetime.now(tz=timezone.utc).isoformat()}, config
+        {
+            "messages": state.messages,
+            "system_time": datetime.now(tz=timezone.utc).isoformat(),
+        },
+        config,
     )
 
     # Get the model's response
-    response: AIMessage = await model.ainvoke(message_value, config)
+    response = cast(AIMessage, await model.ainvoke(message_value, config))
 
     # Handle the case when it's the last step and the model still wants to use a tool
-    if state["is_last_step"] and response.tool_calls:
+    if state.is_last_step and response.tool_calls:
         return {
             "messages": [
                 AIMessage(
@@ -89,14 +95,16 @@ def route_model_output(state: State) -> Literal["__end__", "tools"]:
     Returns:
         str: The name of the next node to call ("__end__" or "tools").
     """
-    messages = state["messages"]
-    last_message = messages[-1]
-    # If there is no function call, then we finish
+    last_message = state.messages[-1]
+    if not isinstance(last_message, AIMessage):
+        raise ValueError(
+            f"Expected AIMessage in output edges, but got {type(last_message).__name__}"
+        )
+    # If there is no tool call, then we finish
     if not last_message.tool_calls:
         return "__end__"
-    # Otherwise if there are tools called, we continue
-    else:
-        return "tools"
+    # Otherwise we execute the requested actions
+    return "tools"
 
 
 # Add a conditional edge to determine the next step after `call_model`

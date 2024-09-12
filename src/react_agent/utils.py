@@ -1,9 +1,9 @@
 """Utility & helper functions."""
 
-from langchain_core.messages import AnyMessage
+from langchain_core.messages import BaseMessage
 
 
-def get_message_text(msg: AnyMessage) -> str:
+def get_message_text(msg: BaseMessage) -> str:
     """Get the text content of a message."""
     content = msg.content
     if isinstance(content, str):
