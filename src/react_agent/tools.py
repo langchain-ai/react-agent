@@ -1,12 +1,21 @@
-import httpx
+"""This module provides example tools for web scraping and search functionality.
 
-from react_agent.utils.configuration import ensure_configurable
-from langchain_core.runnables import RunnableConfig
+It includes:
+- A web scraper that uses an LLM to summarize content based on instructions
+- A basic DuckDuckGo search function
 
-from langchain.chat_models import init_chat_model
+These tools are intended as free examples to get started. For production use,
+consider implementing more robust and specialized tools tailored to your needs.
+"""
+
 from datetime import datetime, timezone
 
-from react_agent.utils.utils import get_message_text
+import httpx
+from langchain.chat_models import init_chat_model
+from langchain_core.runnables import RunnableConfig
+
+from react_agent.configuration import ensure_configurable
+from react_agent.utils import get_message_text
 
 
 # note that arguments typed as "RunnableConfig" in tools will be excluded from the schema generated
