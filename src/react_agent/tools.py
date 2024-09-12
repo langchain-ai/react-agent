@@ -1,12 +1,22 @@
-import httpx
+"""This module provides example tools for web scraping and search functionality.
 
-from react_agent.utils.configuration import ensure_configurable
+It includes:
+- A web scraper that uses an LLM to summarize content based on instructions
+- A basic DuckDuckGo search function
+
+These tools are intended as free examples to get started. For production use,
+consider implementing more robust and specialized tools tailored to your needs.
+"""
+
+from datetime import datetime, timezone
+from typing import Any, Callable, Dict, List, cast
+
+import httpx
+from langchain.chat_models import init_chat_model
 from langchain_core.runnables import RunnableConfig
 
-from langchain.chat_models import init_chat_model
-from datetime import datetime, timezone
-
-from react_agent.utils.utils import get_message_text
+from react_agent.configuration import Configuration
+from react_agent.utils import get_message_text
 
 
 # note that arguments typed as "RunnableConfig" in tools will be excluded from the schema generated
@@ -24,8 +34,8 @@ async def scrape_webpage(url: str, instructions: str, *, config: RunnableConfig)
         response = await client.get(url)
         web_text = response.text
 
-    configuration = ensure_configurable(config)
-    model = init_chat_model(configuration["model_name"])
+    configuration = Configuration.from_runnable_config(config)
+    model = init_chat_model(configuration.model_name)
     response_msg = await model.ainvoke(
         [
             (
@@ -44,7 +54,7 @@ async def scrape_webpage(url: str, instructions: str, *, config: RunnableConfig)
 
 
 # Note, in a real use case, you'd want to use a more robust search API.
-async def search_duckduckgo(query: str) -> dict:
+async def search_duckduckgo(query: str) -> Dict[str, Any]:
     """Search DuckDuckGo for the given query and return the JSON response.
 
     Results are limited, as this is the free public API.
@@ -53,13 +63,13 @@ async def search_duckduckgo(query: str) -> dict:
         response = await client.get(
             "https://api.duckduckgo.com/", params={"q": query, "format": "json"}
         )
-        result = response.json()
+        result = cast(Dict[str, Any], response.json())
 
         result.pop("meta", None)
         return result
 
 
-async def search_wikipedia(query: str) -> dict:
+async def search_wikipedia(query: str) -> Dict[str, Any]:
     """Search Wikipedia for the given query and return the JSON response."""
     url = "https://en.wikipedia.org/w/api.php"
     async with httpx.AsyncClient() as client:
@@ -72,10 +82,10 @@ async def search_wikipedia(query: str) -> dict:
                 "format": "json",
             },
         )
-        return response.json()
+        return cast(Dict[str, Any], response.json())
 
 
-TOOLS = [
+TOOLS: List[Callable[..., Any]] = [
     scrape_webpage,
     search_duckduckgo,
     search_wikipedia,

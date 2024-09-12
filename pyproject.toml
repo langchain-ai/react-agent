@@ -1,24 +1,58 @@
-[tool.poetry]
+[project]
 name = "react-agent"
 version = "0.0.1"
 description = "Starter template for making a custom Reasoning and Action agent (using tool calling) in LangGraph."
-authors = ["William Fu-Hinthorn <13333726+hinthornw@users.noreply.github.com>"]
-license = "MIT"
+authors = [
+    { name = "William Fu-Hinthorn", email = "13333726+hinthornw@users.noreply.github.com" },
+]
 readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.9"
+dependencies = [
+    "langgraph>=0.2.6",
+    "langchain-openai>=0.1.22",
+    "langchain-anthropic>=0.1.23",
+    "langchain>=0.2.14",
+    "langchain-fireworks>=0.1.7",
+    "python-dotenv>=1.0.1",
+]
 
-[tool.poetry.dependencies]
-python = "^3.9"
-langgraph = "^0.2.6"
-langchain-openai = "^0.1.22"
-langchain-anthropic = "^0.1.23"
-langchain = "^0.2.14"
-langchain-fireworks = "^0.1.7"
-python-dotenv = "^1.0.1"
 
-[tool.poetry.group.dev.dependencies]
-mypy = "^1.11.1"
-ruff = "^0.6.1"
+[project.optional-dependencies]
+dev = ["mypy>=1.11.1", "ruff>=0.6.1"]
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["setuptools>=73.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["langgraph.templates.react_agent", "react_agent"]
+[tool.setuptools.package-dir]
+"langgraph.templates.react_agent" = "src/react_agent"
+"react_agent" = "src/react_agent"
+
+
+[tool.setuptools.package-data]
+"*" = ["py.typed"]
+
+[tool.ruff]
+lint.select = [
+    "E",    # pycodestyle
+    "F",    # pyflakes
+    "I",    # isort
+    "D",    # pydocstyle
+    "D401", # First line should be in imperative mood
+    "T201",
+    "UP",
+]
+lint.ignore = [
+    "UP006",
+    "UP007",
+    # We actually do want to import from typing_extensions
+    "UP035",
+    # Relax the convention by _not_ requiring documentation for every function parameter.
+    "D417",
+    "E501",
+]
+[tool.ruff.lint.pydocstyle]
+convention = "google"
