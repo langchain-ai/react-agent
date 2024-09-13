@@ -6,7 +6,6 @@ Works with a chat model with tool calling support.
 from datetime import datetime, timezone
 from typing import Dict, List, Literal, cast
 
-from langchain.chat_models import init_chat_model
 from langchain_core.messages import AIMessage
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnableConfig
@@ -16,6 +15,7 @@ from langgraph.prebuilt import ToolNode
 from react_agent.configuration import Configuration
 from react_agent.state import InputState, State
 from react_agent.tools import TOOLS
+from react_agent.utils import load_chat_model
 
 # Define the function that calls the model
 
@@ -42,7 +42,7 @@ async def call_model(
     )
 
     # Initialize the model with tool binding. Change the model or add more tools here.
-    model = init_chat_model(configuration.model_name).bind_tools(TOOLS)
+    model = load_chat_model(configuration.model_name).bind_tools(TOOLS)
 
     # Prepare the input for the model, including the current system time
     message_value = await prompt.ainvoke(
