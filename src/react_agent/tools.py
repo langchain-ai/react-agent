@@ -2,18 +2,21 @@
 
 It includes:
 - A web scraper that uses an LLM to summarize content based on instructions
-- A basic DuckDuckGo search function
+- A basic Tavily search function
 
 These tools are intended as free examples to get started. For production use,
 consider implementing more robust and specialized tools tailored to your needs.
 """
 
 from datetime import datetime, timezone
-from typing import Any, Callable, Dict, List, cast
+from typing import Any, Callable, List, Optional, cast
 
 import httpx
 from langchain.chat_models import init_chat_model
+from langchain_community.tools.tavily_search import TavilySearchResults
 from langchain_core.runnables import RunnableConfig
+from langchain_core.tools import InjectedToolArg
+from typing_extensions import Annotated
 
 from react_agent.configuration import Configuration
 from react_agent.utils import get_message_text
@@ -53,40 +56,19 @@ async def scrape_webpage(url: str, instructions: str, *, config: RunnableConfig)
     return get_message_text(response_msg)
 
 
-# Note, in a real use case, you'd want to use a more robust search API.
-async def search_duckduckgo(query: str) -> Dict[str, Any]:
-    """Search DuckDuckGo for the given query and return the JSON response.
+async def search(
+    query: str, *, config: Annotated[RunnableConfig, InjectedToolArg]
+) -> Optional[list[dict[str, Any]]]:
+    """Search for general web results.
 
-    Results are limited, as this is the free public API.
+    This function performs a search using the Tavily search engine, which is designed
+    to provide comprehensive, accurate, and trusted results. It's particularly useful
+    for answering questions about current events.
     """
-    async with httpx.AsyncClient() as client:
-        response = await client.get(
-            "https://api.duckduckgo.com/", params={"q": query, "format": "json"}
-        )
-        result = cast(Dict[str, Any], response.json())
-
-        result.pop("meta", None)
-        return result
+    configuration = Configuration.from_runnable_config(config)
+    wrapped = TavilySearchResults(max_results=configuration.max_search_results)
+    result = await wrapped.ainvoke({"query": query})
+    return cast(list[dict[str, Any]], result)
 
 
-async def search_wikipedia(query: str) -> Dict[str, Any]:
-    """Search Wikipedia for the given query and return the JSON response."""
-    url = "https://en.wikipedia.org/w/api.php"
-    async with httpx.AsyncClient() as client:
-        response = await client.get(
-            url,
-            params={
-                "action": "query",
-                "list": "search",
-                "srsearch": query,
-                "format": "json",
-            },
-        )
-        return cast(Dict[str, Any], response.json())
-
-
-TOOLS: List[Callable[..., Any]] = [
-    scrape_webpage,
-    search_duckduckgo,
-    search_wikipedia,
-]
+TOOLS: List[Callable[..., Any]] = [scrape_webpage, search]
