@@ -14,29 +14,28 @@ from react_agent import prompts
 class Configuration:
     """The configuration for the agent."""
 
-    system_prompt: str = field(default=prompts.SYSTEM_PROMPT)
-    """The system prompt to use for the agent's interactions.
-    
-    This prompt sets the context and behavior for the agent.
-    """
-
-    model_name: Annotated[str, {"__template_metadata__": {"kind": "llm"}}] = (
-        "anthropic/claude-3-5-sonnet-20240620"
+    system_prompt: str = field(
+        default=prompts.SYSTEM_PROMPT,
+        metadata={
+            "description": "The system prompt to use for the agent's interactions. "
+            "This prompt sets the context and behavior for the agent."
+        },
     )
-    """The name of the language model to use for the agent's main interactions.
-    
-    Should be in the form: provider/model-name.
-    """
 
-    scraper_tool_model_name: Annotated[
-        str, {"__template_metadata__": {"kind": "llm"}}
-    ] = "accounts/fireworks/models/firefunction-v2"
-    """The name of the language model to use for the web scraping tool.
-    
-    This model is specifically used for summarizing and extracting information from web pages.
-    """
-    max_search_results: int = 10
-    """The maximum number of search results to return for each search query."""
+    model_name: Annotated[str, {"__template_metadata__": {"kind": "llm"}}] = field(
+        default="anthropic/claude-3-5-sonnet-20240620",
+        metadata={
+            "description": "The name of the language model to use for the agent's main interactions. "
+            "Should be in the form: provider/model-name."
+        },
+    )
+
+    max_search_results: int = field(
+        default=10,
+        metadata={
+            "description": "The maximum number of search results to return for each search query."
+        },
+    )
 
     @classmethod
     def from_runnable_config(
