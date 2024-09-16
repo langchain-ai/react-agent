@@ -1,0 +1,464 @@
+interactions:
+- request:
+    body: '{"max_tokens": 1024, "messages": [{"role": "user", "content": "Who is the
+      founder of LangChain?"}], "model": "claude-3-5-sonnet-20240620", "system": "You
+      are a helpful AI assistant.\n\nSystem time: 2024-09-16T12:24:33.011280+00:00",
+      "tools": [{"name": "scrape_webpage", "description": "Scrape the given webpage
+      and return a summary of text based on the instructions.", "input_schema": {"type":
+      "object", "properties": {"url": {"description": "The URL of the webpage to scrape.",
+      "type": "string"}, "instructions": {"description": "The instructions to give
+      to the scraper. An LLM will be used to respond using the instructions and the
+      scraped text.", "type": "string"}, "config": {"type": "object", "properties":
+      {"tags": {"type": "array", "items": {"type": "string"}}, "metadata": {"type":
+      "object"}, "callbacks": {"anyOf": [{"type": "array", "items": {}}, {}]}, "run_name":
+      {"type": "string"}, "max_concurrency": {"type": "integer"}, "recursion_limit":
+      {"type": "integer"}, "configurable": {"type": "object"}, "run_id": {"type":
+      "string", "format": "uuid"}}}}, "required": ["url", "instructions", "config"]}},
+      {"name": "search", "description": "Search for general web results. This function
+      performs a search using the Tavily search engine, which is designed\nto provide
+      comprehensive, accurate, and trusted results. It''s particularly useful\nfor
+      answering questions about current events.", "input_schema": {"type": "object",
+      "properties": {"query": {"type": "string"}}, "required": ["query"]}}]}'
+    headers: {}
+    method: POST
+    uri: https://api.anthropic.com/v1/messages
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA3RRwY7TQAz9FcsXLtNVtpSKzgV1ewC63UqLVruoCEVD4jSBxG7HHtFS5d9XyQoB
+        B06Wn/3s9+wLNiV67HSfZ9dzXq/Xnz8lXt53y9Pm4Xa5vdut0aGdDzR0kWrYEzqM0g5AUG3UAhs6
+        7KSkFj0WbUglTV5P3kxUmMkm02w6y+bTDB0WwkZs6L9cfg81Og30MXh8EAisPymC1Y3CMZFaIwzh
+        myQDqwkqSVxSBKlgE3i/qkPDDj6+altgohJMQCnEooZKIhQpRmKDwCWEokgxGEHDlcQuDIOvYEMG
+        HUEpYHWwkXSWdIW9+yNRpM2TDsbHaw15yrPr1Wq12374VTy9vT3d8M32fbV4/B7RIYdu4L3oGFh8
+        SIb+gsdE8Ywen2qBRv/r5x32/VeHanLIIwUV/lfFWFA6JuKC0HNqW4dp/I2/vGzLTX4QK/r5YuZQ
+        kv2NLaZ9/wwAAP//AwAoDYjV+gEAAA==
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 8c40d5f83851985e-SJC
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 16 Sep 2024 12:24:53 GMT
+      Server:
+      - cloudflare
+      Transfer-Encoding:
+      - chunked
+      X-Robots-Tag:
+      - none
+      anthropic-ratelimit-requests-limit:
+      - '4000'
+      anthropic-ratelimit-requests-remaining:
+      - '3999'
+      anthropic-ratelimit-requests-reset:
+      - '2024-09-16T12:24:54Z'
+      anthropic-ratelimit-tokens-limit:
+      - '400000'
+      anthropic-ratelimit-tokens-remaining:
+      - '400000'
+      anthropic-ratelimit-tokens-reset:
+      - '2024-09-16T12:24:53Z'
+      request-id:
+      - req_01Dz6cSGBZ25kTSQUUSNk2zs
+      via:
+      - 1.1 google
+      x-cloud-trace-context:
+      - ada7375721ba3518afe0c80850b9daaa
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers: {}
+    method: POST
+    uri: https://api.tavily.com/search
+  response:
+    body:
+      string: "{\"query\":\"Who is the founder of LangChain?\",\"follow_up_questions\":null,\"answer\":null,\"images\":[],\"results\":[{\"title\":\"LangChain
+        Company Profile 2024: Valuation, Funding & Investors - PitchBook\",\"url\":\"https://pitchbook.com/profiles/company/522935-92\",\"content\":\"LangChain
+        was founded in 2022. Who is the founder of LangChain? Harrison Chase and Ankush
+        Gola are the founders of LangChain. Who is the CEO of LangChain? Harrison
+        Chase is the CEO of LangChain. Where is LangChain headquartered? LangChain
+        is headquartered in San Francisco, CA. What is the size of LangChain? LangChain
+        has 43 total employees ...\",\"score\":0.9997695,\"raw_content\":null},{\"title\":\"Harrison
+        Chase - The AI Conference\",\"url\":\"https://aiconference.com/speakers/harrison-chase/\",\"content\":\"Harrison
+        Chase is the co-founder and CEO of LangChain, a company formed around the
+        open-source Python/Typescript packages that aim to make it easy to develop
+        Language Model applications. Prior to starting LangChain, he led the ML team
+        at Robust Intelligence (an MLOps company focused on testing and validation
+        of machine learning models), led the ...\",\"score\":0.99951214,\"raw_content\":null},{\"title\":\"Harrison
+        Chase - Forbes\",\"url\":\"https://www.forbes.com/profile/harrison-chase/\",\"content\":\"Cofounder,
+        LangChain. Harrison Chase only cofounded LangChain in late 2022, but the company
+        caught instant attention for enabling anyone to build apps powered by large
+        language models like GPT-4 ...\",\"score\":0.99924165,\"raw_content\":null},{\"title\":\"LangChain
+        - Wikipedia\",\"url\":\"https://en.wikipedia.org/wiki/LangChain\",\"content\":\"In
+        October 2023 LangChain introduced LangServe, a deployment tool designed to
+        facilitate the transition from LCEL (LangChain Expression Language) prototypes
+        to production-ready applications.[5]\\nIntegrations[edit]\\nAs of March 2023,
+        LangChain included integrations with systems including Amazon, Google, and
+        Microsoft Azure cloud storage; API wrappers for news, movie information, and
+        weather; Bash for summarization, syntax and semantics checking, and execution
+        of shell scripts; multiple web scraping subsystems and templates; few-shot
+        learning prompt generation support; finding and summarizing \\\"todo\\\" tasks
+        in code; Google Drive documents, spreadsheets, and presentations summarization,
+        extraction, and creation; Google Search and Microsoft Bing web search; OpenAI,
+        Anthropic, and Hugging Face language models; iFixit repair guides and wikis
+        search and summarization; MapReduce for question answering, combining documents,
+        and question generation; N-gram overlap scoring; PyPDF, pdfminer, fitz, and
+        pymupdf for PDF file text extraction and manipulation; Python and JavaScript
+        code generation, analysis, and debugging; Milvus vector database[6] to store
+        and retrieve vector embeddings; Weaviate vector database[7] to cache embedding
+        and data objects; Redis cache database storage; Python RequestsWrapper and
+        other methods for API requests; SQL and NoSQL databases including JSON support;
+        Streamlit, including for logging; text mapping for k-nearest neighbors search;
+        time zone conversion and calendar operations; tracing and recording stack
+        symbols in threaded and asynchronous subprocess runs; and the Wolfram Alpha
+        website and SDK.[8] As a language model integration framework, LangChain's
+        use-cases largely overlap with those of language models in general, including
+        document analysis and summarization, chatbots, and code analysis.[2]\\nHistory[edit]\\nLangChain
+        was launched in October 2022 as an open source project by Harrison Chase,
+        while working at machine learning startup Robust Intelligence. In April 2023,
+        LangChain had incorporated and the new startup raised over $20 million in
+        funding at a valuation of at least $200 million from venture firm Sequoia
+        Capital, a week after announcing a $10 million seed investment from Benchmark.[3][4]\\n
+        The project quickly garnered popularity, with improvements from hundreds of
+        contributors on GitHub, trending discussions on Twitter, lively activity on
+        the project's Discord server, many YouTube tutorials, and meetups in San Francisco
+        and London. As of April 2023, it can read from more than 50 document types
+        and data sources.[9]\\nReferences[edit]\\nExternal links[edit]\",\"score\":0.9964204,\"raw_content\":null},{\"title\":\"LangChain
+        | Company Overview & News - Forbes\",\"url\":\"https://www.forbes.com/companies/langchain/\",\"content\":\"LangChain.
+        Founded in late 2022, LangChain was an instant hit in Silicon Valley for its
+        software that enables anyone to build apps powered by large language models
+        like GPT-4 in as little as two ...\",\"score\":0.9964204,\"raw_content\":null},{\"title\":\"Harrison
+        Chase - Co-Founder and CEO @ LangChain - Crunchbase\",\"url\":\"https://www.crunchbase.com/person/harrison-chase\",\"content\":\"Number
+        of Current Jobs 1. Number of Past Jobs 1. Harrison Chase is the Co-Founder
+        and CEO at LangChain. Additionally, Harrison Chase has had 1 past job as the
+        Machine Learning Engineer at Robust Intelligence. LangChain Co-Founder and
+        CEO Jan 2023. Organization Name.\",\"score\":0.99505633,\"raw_content\":null},{\"title\":\"Key
+        Insights from Harrison Chase's Talk on Building Next-Level AI Agents\",\"url\":\"https://www.turingpost.com/p/harrison-chase-langchain-ai-agents\",\"content\":\"Harrison
+        Chase, founder of LangChain, shared insights on the evolution of AI agents
+        and their applications during Sequoia Capital's AI Ascent. ... Saves you a
+        lot of research time, plus gives a flashback to ML history and insights into
+        the future. Stay ahead alongside over 65,000 professionals from top AI labs,
+        ML startups, and enterprises ...\",\"score\":0.99392605,\"raw_content\":null},{\"title\":\"What
+        Is LangChain? - IBM\",\"url\":\"https://www.ibm.com/topics/langchain\",\"content\":\"Applications
+        made with LangChain provide great utility for a variety of use cases, from
+        straightforward question-answering and text generation tasks to more complex
+        solutions that use an LLM as a \u201Creasoning engine.\u201D\\nTrain, validate,
+        tune and deploy generative AI, foundation models and machine learning capabilities
+        with ease and build AI applications in a fraction of the time with a fraction
+        of the data.\\n When building a chain for an agent, inputs include:\\nDespite
+        their heralded power and versatility, LLMs have important limitations: namely,
+        a lack of up-to-date information, a lack of domain-specific expertise and
+        a general difficulty with math.\\nLangChain tools\_(link resides outside ibm.com)
+        are a set of functions that empower LangChain agents to interact with real-world
+        information in order to expand or improve the services it can provide. Launched
+        by Harrison Chase in October 2022, LangChain enjoyed a meteoric rise to prominence:
+        as of June 2023, it was the single fastest-growing open source project on
+        Github.1 Coinciding with the momentous launch of OpenAI\u2019s ChatGPT the
+        following month, LangChain has played a significant role in making generative
+        AI more accessible to enthusiasts in the wake of its widespread popularity.\\n
+        Reimagine how you work with\_AI: our diverse, global team of more than 20,000
+        AI\_experts can help you quickly and confidently\_design and scale AI and
+        automation across your\_business, working across our own IBM\_watsonx\_technology\_and
+        an open ecosystem of partners to deliver any\_AI model, on any cloud, guided
+        by ethics and trust.\\n While it\u2019s the GPT model that interprets the
+        user\u2019s input and composes a natural language response, it\u2019s the
+        application that (among other things) provides an interface for the user to
+        type and read and a UX design that governs the chatbot experience.\",\"score\":0.99306935,\"raw_content\":null},{\"title\":\"LangChain's
+        origin story | Basedash\",\"url\":\"https://www.basedash.com/blog/langchains-origin-story\",\"content\":\"USER
+        CRM\\nADMIN PANEL\\nSQL COMPOSER WITH AI\\nRelated posts\\nRelated posts\\nRelated
+        posts\\nMy 9 core Mac apps and utilities\\nTom Johnson\\nHow Supabase became
+        this generation\u2019s database\\nMax Musing\\nReport: The 2023 State of Databases\\nMax
+        Musing\\nBasedash on the main stage at Collision 2023\\nMax Musing\\nBasedash
+        raises $4.5M led by Matrix\\nMax Musing\\n6 Retool Alternatives for 2023 -
+        A Comprehensive Guide\\nJordan Chavis\\nSOC IIType 2 Certified\\nCompany\\nAbout\\nCareers\\nTerms
+        of service\\nPrivacy policy\\nContact us\\nBlog\\nBrand\\nSlack community\\nSitemap\\nProduct\\nPricing\\nIntegrations\\nFeedback\\nChangelog\\nDocs\\nDownload
+        app\\nStatus\\nFeatures\\nViews\\nQueries\\nActions\\nSecurity\\nPower features\\n\xA9
+        2023 BaseDash Inc.\\nProudly carbon-neutral.\\n SOC IIType 2 Certified\\nCompany\\nAbout\\nCareers\\nTerms
+        of service\\nPrivacy policy\\nContact us\\nBlog\\nBrand\\nSlack community\\nSitemap\\nProduct\\nPricing\\nIntegrations\\nFeedback\\nChangelog\\nDocs\\nDownload
+        app\\nStatus\\nFeatures\\nViews\\nQueries\\nActions\\nSecurity\\nPower features\\n\xA9
+        2023 BaseDash Inc.\\nProudly carbon-neutral.\\n SOC IIType 2 Certified\\nCompany\\nAbout\\nCareers\\nTerms
+        of service\\nPrivacy policy\\nContact us\\nBlog\\nBrand\\nSlack community\\nSitemap\\nProduct\\nPricing\\nIntegrations\\nFeedback\\nChangelog\\nDocs\\nDownload
+        app\\nStatus\\nFeatures\\nViews\\nQueries\\nActions\\nSecurity\\nPower features\\n\xA9
+        2023 BaseDash Inc.\\nProudly carbon-neutral. About\\nFeatures\\nPricing\\nChangelog\\nBlog\\nDocs\\nLog
+        in\\nSign up\\nAbout\\nFeatures\\nPricing\\nLog in\\nSign up\\nLog in\\nSign
+        up\\nLangChain's origin story\\nMax Musing\\nFounder\\nThe admin panel that
+        you'll actually want to use. To do this, the LangSmith product allows developers
+        to see the inputs and outputs at each step of a model run and the exact sequence
+        of runs (debug), write tests to check if the response was intended behavior
+        (test), collect input/output examples to further refine the model (evaluate),
+        and log latency, token usage, and feedback (monitor).\\n\",\"score\":0.98208266,\"raw_content\":null},{\"title\":\"The
+        Point of LangChain \u2014 with Harrison Chase of LangChain\",\"url\":\"https://www.latent.space/p/langchain\",\"content\":\"And
+        so you can do a lot of things like reflection and kind of like making sure
+        that you're on the right track and really put more safeguards and thinking
+        about these agents as opposed to relying on like chas and interface, like
+        the bot we have that's on GitHub answering questions on the issues, I think
+        probably gives better answers than the bots that we have that are on chat
+        on the website. [00:50:32]\\nHarrison: And then between kind of like allowing
+        for, I think one helpful thing that we did in terms of like distinguishing
+        between basically the base interfaces and then more complex stuff is part
+        of the separation around the docs is there's like the components piece, which
+        has the model IO, the retrieval, the agents, the callbacks, things like that.
+        And then like, I know a lot of people are doing this, but like a personal
+        assistant for like managing like email calendar, basic stuff, which I think
+        is, I think that's like a fantastic application for these like agent like
+        things, because if you think about personal assistants today, you usually
+        interact, I don't have one, but I'm told you interact with them over email.
+        Show Notes\\nLangChain\\nLangChain\u2019s Berkshire Hathaway Homepage\\nAbstractions
+        tweet\\nLangSmith\\nLangSmith Cookbooks repo\\nLangChain Retrieval blog\\nEvaluating
+        CSV Question/Answering blog and YouTube\\nMultiOn Partner blog\\nHarvard Sports
+        Analytics Collective\\nEvaluating RAG Webinar\\nawesome-langchain:\\nLLM Math
+        Chain\\nSelf-Ask\\nLangChain Hub UI\\n\u201CLangChain is Pointless\u201D\\nHarrison\u2019s
+        links\\nsports - estimating player compatibility in the NBA\\nearly interest
+        in prompt injections\\nGitHub\\nTwitter\\nTimestamps\\n[00:00:00] Introduction\\n[00:00:48]
+        Harrison's background and how sports led him into ML\\n[00:04:54] Memory (for
+        long running chats, whether a simple Buffer, Knowledge Graph, Summary, or
+        Vector Store)\\nUse-Cases: compositions of Components\\nChains: combining
+        a PromptTemplate, LLM Model and optional OutputParser\\nwith Router, Sequential,
+        and Transform Chains for advanced usecases\\nsavable, sharable schemas that
+        can be loaded from LangChainHub\\nAgents: a chain that has access to a suite
+        of tools, of nondeterministic8 length because the LLM is used as a reasoning
+        engine to determine which actions to take and in which order.\",\"score\":0.8589554,\"raw_content\":null}],\"response_time\":1.84}"
+    headers:
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '12187'
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 16 Sep 2024 12:24:55 GMT
+      Server:
+      - nginx
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"max_tokens": 1024, "messages": [{"role": "user", "content": "Who is the
+      founder of LangChain?"}, {"role": "assistant", "content": [{"text": "To answer
+      this question about the founder of LangChain, I''ll need to search for current
+      and accurate information. Let me do that for you.", "type": "text"}, {"type":
+      "tool_use", "name": "search", "input": {"query": "Who is the founder of LangChain?"},
+      "id": "toolu_01CCCZNHzcW8KxBnBNGf9Vjr"}]}, {"role": "user", "content": [{"type":
+      "tool_result", "content": "[{\"url\": \"https://pitchbook.com/profiles/company/522935-92\",
+      \"content\": \"LangChain was founded in 2022. Who is the founder of LangChain?
+      Harrison Chase and Ankush Gola are the founders of LangChain. Who is the CEO
+      of LangChain? Harrison Chase is the CEO of LangChain. Where is LangChain headquartered?
+      LangChain is headquartered in San Francisco, CA. What is the size of LangChain?
+      LangChain has 43 total employees ...\"}, {\"url\": \"https://aiconference.com/speakers/harrison-chase/\",
+      \"content\": \"Harrison Chase is the co-founder and CEO of LangChain, a company
+      formed around the open-source Python/Typescript packages that aim to make it
+      easy to develop Language Model applications. Prior to starting LangChain, he
+      led the ML team at Robust Intelligence (an MLOps company focused on testing
+      and validation of machine learning models), led the ...\"}, {\"url\": \"https://www.forbes.com/profile/harrison-chase/\",
+      \"content\": \"Cofounder, LangChain. Harrison Chase only cofounded LangChain
+      in late 2022, but the company caught instant attention for enabling anyone to
+      build apps powered by large language models like GPT-4 ...\"}, {\"url\": \"https://en.wikipedia.org/wiki/LangChain\",
+      \"content\": \"In October 2023 LangChain introduced LangServe, a deployment
+      tool designed to facilitate the transition from LCEL (LangChain Expression Language)
+      prototypes to production-ready applications.[5]\\nIntegrations[edit]\\nAs of
+      March 2023, LangChain included integrations with systems including Amazon, Google,
+      and Microsoft Azure cloud storage; API wrappers for news, movie information,
+      and weather; Bash for summarization, syntax and semantics checking, and execution
+      of shell scripts; multiple web scraping subsystems and templates; few-shot learning
+      prompt generation support; finding and summarizing \\\"todo\\\" tasks in code;
+      Google Drive documents, spreadsheets, and presentations summarization, extraction,
+      and creation; Google Search and Microsoft Bing web search; OpenAI, Anthropic,
+      and Hugging Face language models; iFixit repair guides and wikis search and
+      summarization; MapReduce for question answering, combining documents, and question
+      generation; N-gram overlap scoring; PyPDF, pdfminer, fitz, and pymupdf for PDF
+      file text extraction and manipulation; Python and JavaScript code generation,
+      analysis, and debugging; Milvus vector database[6] to store and retrieve vector
+      embeddings; Weaviate vector database[7] to cache embedding and data objects;
+      Redis cache database storage; Python RequestsWrapper and other methods for API
+      requests; SQL and NoSQL databases including JSON support; Streamlit, including
+      for logging; text mapping for k-nearest neighbors search; time zone conversion
+      and calendar operations; tracing and recording stack symbols in threaded and
+      asynchronous subprocess runs; and the Wolfram Alpha website and SDK.[8] As a
+      language model integration framework, LangChain''s use-cases largely overlap
+      with those of language models in general, including document analysis and summarization,
+      chatbots, and code analysis.[2]\\nHistory[edit]\\nLangChain was launched in
+      October 2022 as an open source project by Harrison Chase, while working at machine
+      learning startup Robust Intelligence. In April 2023, LangChain had incorporated
+      and the new startup raised over $20 million in funding at a valuation of at
+      least $200 million from venture firm Sequoia Capital, a week after announcing
+      a $10 million seed investment from Benchmark.[3][4]\\n The project quickly garnered
+      popularity, with improvements from hundreds of contributors on GitHub, trending
+      discussions on Twitter, lively activity on the project''s Discord server, many
+      YouTube tutorials, and meetups in San Francisco and London. As of April 2023,
+      it can read from more than 50 document types and data sources.[9]\\nReferences[edit]\\nExternal
+      links[edit]\"}, {\"url\": \"https://www.forbes.com/companies/langchain/\", \"content\":
+      \"LangChain. Founded in late 2022, LangChain was an instant hit in Silicon Valley
+      for its software that enables anyone to build apps powered by large language
+      models like GPT-4 in as little as two ...\"}, {\"url\": \"https://www.crunchbase.com/person/harrison-chase\",
+      \"content\": \"Number of Current Jobs 1. Number of Past Jobs 1. Harrison Chase
+      is the Co-Founder and CEO at LangChain. Additionally, Harrison Chase has had
+      1 past job as the Machine Learning Engineer at Robust Intelligence. LangChain
+      Co-Founder and CEO Jan 2023. Organization Name.\"}, {\"url\": \"https://www.turingpost.com/p/harrison-chase-langchain-ai-agents\",
+      \"content\": \"Harrison Chase, founder of LangChain, shared insights on the
+      evolution of AI agents and their applications during Sequoia Capital''s AI Ascent.
+      ... Saves you a lot of research time, plus gives a flashback to ML history and
+      insights into the future. Stay ahead alongside over 65,000 professionals from
+      top AI labs, ML startups, and enterprises ...\"}, {\"url\": \"https://www.ibm.com/topics/langchain\",
+      \"content\": \"Applications made with LangChain provide great utility for a
+      variety of use cases, from straightforward question-answering and text generation
+      tasks to more complex solutions that use an LLM as a \u201creasoning engine.\u201d\\nTrain,
+      validate, tune and deploy generative AI, foundation models and machine learning
+      capabilities with ease and build AI applications in a fraction of the time with
+      a fraction of the data.\\n When building a chain for an agent, inputs include:\\nDespite
+      their heralded power and versatility, LLMs have important limitations: namely,
+      a lack of up-to-date information, a lack of domain-specific expertise and a
+      general difficulty with math.\\nLangChain tools\u00a0(link resides outside ibm.com)
+      are a set of functions that empower LangChain agents to interact with real-world
+      information in order to expand or improve the services it can provide. Launched
+      by Harrison Chase in October 2022, LangChain enjoyed a meteoric rise to prominence:
+      as of June 2023, it was the single fastest-growing open source project on Github.1
+      Coinciding with the momentous launch of OpenAI\u2019s ChatGPT the following
+      month, LangChain has played a significant role in making generative AI more
+      accessible to enthusiasts in the wake of its widespread popularity.\\n Reimagine
+      how you work with\u00a0AI: our diverse, global team of more than 20,000 AI\u00a0experts
+      can help you quickly and confidently\u00a0design and scale AI and automation
+      across your\u00a0business, working across our own IBM\u00a0watsonx\u00a0technology\u00a0and
+      an open ecosystem of partners to deliver any\u00a0AI model, on any cloud, guided
+      by ethics and trust.\\n While it\u2019s the GPT model that interprets the user\u2019s
+      input and composes a natural language response, it\u2019s the application that
+      (among other things) provides an interface for the user to type and read and
+      a UX design that governs the chatbot experience.\"}, {\"url\": \"https://www.basedash.com/blog/langchains-origin-story\",
+      \"content\": \"USER CRM\\nADMIN PANEL\\nSQL COMPOSER WITH AI\\nRelated posts\\nRelated
+      posts\\nRelated posts\\nMy 9 core Mac apps and utilities\\nTom Johnson\\nHow
+      Supabase became this generation\u2019s database\\nMax Musing\\nReport: The 2023
+      State of Databases\\nMax Musing\\nBasedash on the main stage at Collision 2023\\nMax
+      Musing\\nBasedash raises $4.5M led by Matrix\\nMax Musing\\n6 Retool Alternatives
+      for 2023 - A Comprehensive Guide\\nJordan Chavis\\nSOC IIType 2 Certified\\nCompany\\nAbout\\nCareers\\nTerms
+      of service\\nPrivacy policy\\nContact us\\nBlog\\nBrand\\nSlack community\\nSitemap\\nProduct\\nPricing\\nIntegrations\\nFeedback\\nChangelog\\nDocs\\nDownload
+      app\\nStatus\\nFeatures\\nViews\\nQueries\\nActions\\nSecurity\\nPower features\\n\u00a9
+      2023 BaseDash Inc.\\nProudly carbon-neutral.\\n SOC IIType 2 Certified\\nCompany\\nAbout\\nCareers\\nTerms
+      of service\\nPrivacy policy\\nContact us\\nBlog\\nBrand\\nSlack community\\nSitemap\\nProduct\\nPricing\\nIntegrations\\nFeedback\\nChangelog\\nDocs\\nDownload
+      app\\nStatus\\nFeatures\\nViews\\nQueries\\nActions\\nSecurity\\nPower features\\n\u00a9
+      2023 BaseDash Inc.\\nProudly carbon-neutral.\\n SOC IIType 2 Certified\\nCompany\\nAbout\\nCareers\\nTerms
+      of service\\nPrivacy policy\\nContact us\\nBlog\\nBrand\\nSlack community\\nSitemap\\nProduct\\nPricing\\nIntegrations\\nFeedback\\nChangelog\\nDocs\\nDownload
+      app\\nStatus\\nFeatures\\nViews\\nQueries\\nActions\\nSecurity\\nPower features\\n\u00a9
+      2023 BaseDash Inc.\\nProudly carbon-neutral. About\\nFeatures\\nPricing\\nChangelog\\nBlog\\nDocs\\nLog
+      in\\nSign up\\nAbout\\nFeatures\\nPricing\\nLog in\\nSign up\\nLog in\\nSign
+      up\\nLangChain''s origin story\\nMax Musing\\nFounder\\nThe admin panel that
+      you''ll actually want to use. To do this, the LangSmith product allows developers
+      to see the inputs and outputs at each step of a model run and the exact sequence
+      of runs (debug), write tests to check if the response was intended behavior
+      (test), collect input/output examples to further refine the model (evaluate),
+      and log latency, token usage, and feedback (monitor).\\n\"}, {\"url\": \"https://www.latent.space/p/langchain\",
+      \"content\": \"And so you can do a lot of things like reflection and kind of
+      like making sure that you''re on the right track and really put more safeguards
+      and thinking about these agents as opposed to relying on like chas and interface,
+      like the bot we have that''s on GitHub answering questions on the issues, I
+      think probably gives better answers than the bots that we have that are on chat
+      on the website. [00:50:32]\\nHarrison: And then between kind of like allowing
+      for, I think one helpful thing that we did in terms of like distinguishing between
+      basically the base interfaces and then more complex stuff is part of the separation
+      around the docs is there''s like the components piece, which has the model IO,
+      the retrieval, the agents, the callbacks, things like that. And then like, I
+      know a lot of people are doing this, but like a personal assistant for like
+      managing like email calendar, basic stuff, which I think is, I think that''s
+      like a fantastic application for these like agent like things, because if you
+      think about personal assistants today, you usually interact, I don''t have one,
+      but I''m told you interact with them over email. Show Notes\\nLangChain\\nLangChain\u2019s
+      Berkshire Hathaway Homepage\\nAbstractions tweet\\nLangSmith\\nLangSmith Cookbooks
+      repo\\nLangChain Retrieval blog\\nEvaluating CSV Question/Answering blog and
+      YouTube\\nMultiOn Partner blog\\nHarvard Sports Analytics Collective\\nEvaluating
+      RAG Webinar\\nawesome-langchain:\\nLLM Math Chain\\nSelf-Ask\\nLangChain Hub
+      UI\\n\u201cLangChain is Pointless\u201d\\nHarrison\u2019s links\\nsports - estimating
+      player compatibility in the NBA\\nearly interest in prompt injections\\nGitHub\\nTwitter\\nTimestamps\\n[00:00:00]
+      Introduction\\n[00:00:48] Harrison''s background and how sports led him into
+      ML\\n[00:04:54] Memory (for long running chats, whether a simple Buffer, Knowledge
+      Graph, Summary, or Vector Store)\\nUse-Cases: compositions of Components\\nChains:
+      combining a PromptTemplate, LLM Model and optional OutputParser\\nwith Router,
+      Sequential, and Transform Chains for advanced usecases\\nsavable, sharable schemas
+      that can be loaded from LangChainHub\\nAgents: a chain that has access to a
+      suite of tools, of nondeterministic8 length because the LLM is used as a reasoning
+      engine to determine which actions to take and in which order.\"}]", "tool_use_id":
+      "toolu_01CCCZNHzcW8KxBnBNGf9Vjr", "is_error": false}]}], "model": "claude-3-5-sonnet-20240620",
+      "system": "You are a helpful AI assistant.\n\nSystem time: 2024-09-16T12:24:37.857496+00:00",
+      "tools": [{"name": "scrape_webpage", "description": "Scrape the given webpage
+      and return a summary of text based on the instructions.", "input_schema": {"type":
+      "object", "properties": {"url": {"description": "The URL of the webpage to scrape.",
+      "type": "string"}, "instructions": {"description": "The instructions to give
+      to the scraper. An LLM will be used to respond using the instructions and the
+      scraped text.", "type": "string"}, "config": {"type": "object", "properties":
+      {"tags": {"type": "array", "items": {"type": "string"}}, "metadata": {"type":
+      "object"}, "callbacks": {"anyOf": [{"type": "array", "items": {}}, {}]}, "run_name":
+      {"type": "string"}, "max_concurrency": {"type": "integer"}, "recursion_limit":
+      {"type": "integer"}, "configurable": {"type": "object"}, "run_id": {"type":
+      "string", "format": "uuid"}}}}, "required": ["url", "instructions", "config"]}},
+      {"name": "search", "description": "Search for general web results. This function
+      performs a search using the Tavily search engine, which is designed\nto provide
+      comprehensive, accurate, and trusted results. It''s particularly useful\nfor
+      answering questions about current events.", "input_schema": {"type": "object",
+      "properties": {"query": {"type": "string"}}, "required": ["query"]}}]}'
+    headers: {}
+    method: POST
+    uri: https://api.anthropic.com/v1/messages
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA2xVUW/cNgz+K4SefYfLJe0KvyXB2gZI0K5r97B1CHgybWsnk65EXeoF+e+D5Lv0
+        bs2TIZv6+PEjP/rRuMbUZojd/ersD/r8Z+ovRLrfvuy+NP9+f3M59IOpjE4j5SiKETsylQni8wuM
+        0UVFVlOZQRrypjbWY2pocb54tYjCTLpYr9YXq9frlamMFVZiNfVfjwdQpe/5ennU5gojNSAM2hNE
+        wmB7CBST11jBDVhkGIPsXEMwSYIHpz04biUMqE4YcCNJy+VWEjcUQFq4Re6ue3Rcf+Wv/HyCB4z7
+        sAY2E7zHEFwUhuseI4Fj+GBVNhRgvVqvl/CeAgEGgigDwZYmGMWxxheSIjflbGUYkaeS92wJb+fP
+        9U+p4j56cQxw/euHE/bLjLJewvVzWA2/ZypRUrAUAX0UGIiLEpe8TbGHd+IRMAIeoVegvaSuf4HG
+        IIGywoNjYvUTtISaAjVZjszxROwdOo8bT4XZ+b4+xx00qFTDqdIeE9t+RjoWtrBjkJF4MVeSCfxD
+        VgvsxRKu0G67kLFruKI2U4yKQXOm5xzV/6vxNPfgDm3vmOCWMHC+ooQDoMIn2aSocMNK3ruO2FKV
+        mdzdfhjjoXXQik2HmaRYcubm7NC7ZpZBWhj2OfwhR3FDLAW8yh2bsbogD9ofC/MtObv1E3TomBoY
+        ZUweg9PpoPflTUnX0I68jBQyryGx02kJVxNcjsH5LON5dTxw0GPW2UoYJaBSU0ACulxJdB271llk
+        hXZuWCH6egkfUxglnrQO3RBBBQbcEjgFwjjl855RiUzYEdzlkgHH0TtbhIlLuNGDXfMEtgEHepCw
+        hVYCbJLzZViOr8AoDxRmP3oMHYE/4M+SgndbgncfPy8uCulflvCJrHTs8v2fnJXL/lFLjzuCQJbc
+        LkuiuvfKXmslm7dJk6KGqZqXywyzoUz02Atj2vwgXTi9lbChWErrXYRS536RjR4122Z5un96jLAh
+        my2MwKLZSjl2onDU/r3Q2dcQR8xDOmtaZlnEx1Lls7h5l6ACcYF7HpzSRBsIlU4VTzEDvSx2WQfU
+        ts66sg6W5unvykSV8T4QRmFTG+LmXlNgs/8Q6VvKXjI1J+8rk8o/o340jsek9ypb4mjq8zers8pI
+        0pOXZxdPT/8BAAD//wMA8UBANZQGAAA=
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 8c40d61569facfc0-SJC
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 16 Sep 2024 12:25:03 GMT
+      Server:
+      - cloudflare
+      Transfer-Encoding:
+      - chunked
+      X-Robots-Tag:
+      - none
+      anthropic-ratelimit-requests-limit:
+      - '4000'
+      anthropic-ratelimit-requests-remaining:
+      - '3999'
+      anthropic-ratelimit-requests-reset:
+      - '2024-09-16T12:25:54Z'
+      anthropic-ratelimit-tokens-limit:
+      - '400000'
+      anthropic-ratelimit-tokens-remaining:
+      - '400000'
+      anthropic-ratelimit-tokens-reset:
+      - '2024-09-16T12:25:03Z'
+      request-id:
+      - req_018pAJZyzb11i66uT7AZPk7R
+      via:
+      - 1.1 google
+      x-cloud-trace-context:
+      - c2803397a8cc610b16de02a6c63f2dfe
+    status:
+      code: 200
+      message: OK
+version: 1
