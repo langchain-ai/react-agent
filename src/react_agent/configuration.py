@@ -22,7 +22,7 @@ class Configuration:
         },
     )
 
-    model_name: Annotated[str, {"__template_metadata__": {"kind": "llm"}}] = field(
+    model: Annotated[str, {"__template_metadata__": {"kind": "llm"}}] = field(
         default="anthropic/claude-3-5-sonnet-20240620",
         metadata={
             "description": "The name of the language model to use for the agent's main interactions. "

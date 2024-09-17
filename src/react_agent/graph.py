@@ -42,7 +42,7 @@ async def call_model(
     )
 
     # Initialize the model with tool binding. Change the model or add more tools here.
-    model = load_chat_model(configuration.model_name).bind_tools(TOOLS)
+    model = load_chat_model(configuration.model).bind_tools(TOOLS)
 
     # Prepare the input for the model, including the current system time
     message_value = await prompt.ainvoke(
