@@ -67,4 +67,4 @@ For a complete list of dependencies, refer to the `requirements.txt` file.
 
 ## Note
 
-This system uses the OpenAI GPT-4 model, which may incur costs. Make sure you understand the pricing and usage limits of the OpenAI API before running the script.
+This system uses the OpenAI GPT-4o model, which may incur costs. Make sure you understand the pricing and usage limits of the OpenAI API before running the script.

@@ -26,7 +26,9 @@ class DomainSuggestionSet(BaseModel):
 domain_parser = PydanticOutputParser(pydantic_object=DomainSuggestionSet)
 
 domain_template = """
-You are an expert domain name investment expert with 30 years of experience and expertise. Your task is to generate high-quality, brandable domain names based on the information provided about existing successful companies.
+You are an expert domain name investment expert with 30 years of experience and expertise. 
+Your task is to generate high-quality, brandable domain names based on the information provided
+about existing successful companies.
 
 A good domain name has the following qualities:
 - Short (preferably less than 10 characters, but up to 15 is acceptable)
@@ -41,11 +43,14 @@ Now, based on the following list of successful companies and their domains:
 
 {company_list}
 
-Generate 10 high-quality domain names for new AI SaaS B2B Enterprise startups. Your suggestions should be inspired by the trends and patterns you see in the provided company list, but should be entirely new and unique names, not variations of existing ones.
+Generate 10 high-quality domain names for new AI SaaS B2B Enterprise startups.
+Your suggestions should be inspired by the trends and patterns you see in the provided company list,
+but should be entirely new and unique names, not variations of existing ones.
 
 Only generate .com and .ai TLDs.
 
-For each suggested domain, provide a brief explanation of why it's suitable and how it relates to the AI SaaS B2B Enterprise space.
+For each suggested domain, provide a brief explanation of why it's suitable and how it
+relates to the AI SaaS B2B Enterprise space.
 
 System time: {system_time}
 
