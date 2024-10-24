@@ -5,6 +5,7 @@ from langchain_core.output_parsers import PydanticOutputParser, StrOutputParser
 from pydantic import BaseModel, Field
 from typing import List
 from dotenv import load_dotenv
+from datetime import datetime 
 
 # Load environment variables
 load_dotenv()
@@ -100,7 +101,7 @@ understanding of similar companies in the same sector.
 
 {format_instructions}
 
-Please provide a well-formatted list of 20 or more companies with the requested information.
+Please provide a well-formatted list of 10 companies with the requested information.
 """
 
 prompt = PromptTemplate(

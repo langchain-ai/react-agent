@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from agents.market_research_bot import market_research_chain
 from agents.domain_generator import generate_domain_suggestions
 from agents.domain_name_scoring_bot import evaluate_domain_set
-from IPython.display import Image, display
+
 
 # Define our state
 class State(TypedDict):
@@ -109,19 +109,19 @@ config = {"configurable": {"thread_id": "1"}}
 # Compile the graph
 graph = workflow.compile()
 
-def run_domain_research():
-    initial_state = initialize()
-    for output in graph.stream(initial_state):
-        if "intermediate_steps" in output:
-            print(f"Step: {output['intermediate_steps'][-1][0]}")
-            print(f"Output: {output['intermediate_steps'][-1][1]}")
-        else:
-            print("Final output:", output)
+# def run_domain_research():
+#     initial_state = initialize()
+#     for output in graph.stream(initial_state):
+#         if "intermediate_steps" in output:
+#             print(f"Step: {output['intermediate_steps'][-1][0]}")
+#             print(f"Output: {output['intermediate_steps'][-1][1]}")
+#         else:
+#             print("Final output:", output)
     
-    return output
+#     return output
 
-# Add this new code block at the end of the file
-try:
-    display(Image(graph.get_graph(xray=True).draw_mermaid_png()))
-except Exception:
-    pass
+# # Add this new code block at the end of the file
+# try:
+#     display(Image(graph.get_graph(xray=True).draw_mermaid_png()))
+# except Exception:
+#     pass
