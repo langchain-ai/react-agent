@@ -1,5 +1,4 @@
 """Define the configurable parameters for the agent."""
-
 from __future__ import annotations
 
 from dataclasses import dataclass, field, fields
@@ -8,6 +7,7 @@ from typing import Annotated, Optional
 from langchain_core.runnables import RunnableConfig, ensure_config
 
 from react_agent import prompts
+import os
 
 
 @dataclass(kw_only=True)
@@ -34,6 +34,13 @@ class Configuration:
         default=10,
         metadata={
             "description": "The maximum number of search results to return for each search query."
+        },
+    )
+
+    openweather_api_key: Optional[str] = field(
+        default=os.getenv("OPENWEATHERMAP_API_KEY"),
+        metadata={
+            "description": "The API key for the OpenWeatherMap API."
         },
     )
 
