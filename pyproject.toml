@@ -7,7 +7,7 @@ authors = [
 ]
 readme = "README.md"
 license = { text = "MIT" }
-requires-python = ">=3.9"
+requires-python = ">=3.11"
 dependencies = [
     "langgraph>=0.2.6",
     "langchain-openai>=0.1.22",
@@ -60,3 +60,8 @@ lint.ignore = [
 "tests/*" = ["D", "UP"]
 [tool.ruff.lint.pydocstyle]
 convention = "google"
+
+[dependency-groups]
+dev = [
+    "langgraph-cli[inmem]>=0.1.71",
+]
