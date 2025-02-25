@@ -1,6 +1,7 @@
 """Demo script for the customer service supervisor agent API.
 
 This script demonstrates how to use the customer service supervisor agent API.
+The API uses OpenAI's GPT-4o model for generating responses.
 """
 
 import asyncio
@@ -14,6 +15,7 @@ async def main():
     print("=========================================")
     print("This demo shows how to use the API to interact with the supervisor agent system.")
     print("The API maintains conversation state across multiple interactions.")
+    print("The system uses OpenAI's GPT-4o model for generating responses.")
     print()
     
     # Example customer service requests

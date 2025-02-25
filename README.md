@@ -6,7 +6,7 @@ This project implements a supervisor agent system for customer service, with spe
 
 The system consists of:
 
-1. **Orchestrator (Supervisor) Agent**: The main agent that receives customer service requests, classifies them into categories, identifies the appropriate flow, and delegates tasks to specialized agents.
+1. **Orchestrator (Supervisor) Agent**: The main agent that receives customer service requests, classifies them into categories, identifies the appropriate flow, and delegates tasks to specialized agents. Powered by OpenAI's GPT-4o model.
 
 2. **Specialized Agents**:
    - **Knowledge Lookup Agent**: Searches the company's knowledge base for information.
@@ -45,25 +45,6 @@ The system uses a supervisor agent pattern, where the orchestrator agent is the 
                   │   Setter Agent  │
                   └─────────────────┘
 ```
-
-## Installation
-
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/yourusername/customer-service-agent.git
-   cd customer-service-agent
-   ```
-
-2. Install the dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-3. Create a `.env` file with your API keys:
-   ```
-   ANTHROPIC_API_KEY=your_anthropic_api_key
-   PORT=8000
-   ```
 
 ## Usage
 

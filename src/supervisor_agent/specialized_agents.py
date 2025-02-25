@@ -14,7 +14,7 @@ from react_agent.utils import load_chat_model
 
 
 def create_knowledge_lookup_agent(
-    model_name: str = "anthropic/claude-3-5-sonnet-20240620",
+    model_name: str = "openai/gpt-4o",
 ) -> Any:
     """Create an agent specialized in knowledge base lookup.
     
@@ -50,7 +50,7 @@ def create_knowledge_lookup_agent(
 
 
 def create_zendesk_retrieval_agent(
-    model_name: str = "anthropic/claude-3-5-sonnet-20240620",
+    model_name: str = "openai/gpt-4o",
 ) -> Any:
     """Create an agent specialized in Zendesk data retrieval.
     
@@ -86,7 +86,7 @@ def create_zendesk_retrieval_agent(
 
 
 def create_zendesk_setter_agent(
-    model_name: str = "anthropic/claude-3-5-sonnet-20240620",
+    model_name: str = "openai/gpt-4o",
 ) -> Any:
     """Create an agent specialized in setting Zendesk data.
     

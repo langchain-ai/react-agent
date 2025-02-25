@@ -4,10 +4,11 @@ This module sets up a supervisor agent system for customer service, with special
 for different tasks such as knowledge lookup, Zendesk data retrieval, and Zendesk data setting.
 """
 
-from typing import Dict, List, Optional, Any
+from typing import Dict, Any
 
 from react_agent.state import State
 from react_agent.utils import load_chat_model
+from react_agent.helpers import prepare_supervisor_state
 from supervisor_agent.specialized_agents import (
     create_knowledge_lookup_agent,
     create_zendesk_retrieval_agent,
@@ -17,9 +18,109 @@ from supervisor_agent.supervisor import create_supervisor
 from supervisor_agent.tools import SUPERVISOR_TOOLS
 
 
+class OrchestratorSystem:
+    """Orchestrator system that wraps the supervisor agent system with conversation state handling."""
+    
+    def __init__(self, supervisor_system: Any):
+        """Initialize the orchestrator system.
+        
+        Args:
+            supervisor_system: The supervisor agent system to wrap.
+        """
+        self.supervisor_system = supervisor_system
+    
+    async def ainvoke(self, state: Dict[str, Any]) -> Dict[str, Any]:
+        """Invoke the orchestrator with conversation state handling.
+        
+        This method wraps the supervisor system to handle conversation state,
+        including tracking the current category, flow, and flow step.
+        
+        Args:
+            state: The current state, including messages and conversation metadata.
+            
+        Returns:
+            The updated state with the orchestrator's response.
+        """
+        # Extract conversation state
+        discussion_id = state.get("discussion_id", "")
+        current_category = state.get("current_category")
+        current_flow = state.get("current_flow")
+        flow_step = state.get("flow_step")
+        metadata = state.get("metadata", {})
+        
+        # Create a state object for the supervisor system
+        supervisor_state = prepare_supervisor_state(state["messages"])
+        
+        print(f"Supervisor state: {supervisor_state}")
+        # Invoke the supervisor system
+        result = await self.supervisor_system.ainvoke(supervisor_state)
+        print(f"Supervisor result: {result}")
+        
+        # Extract the response message
+        response_message = result["messages"][-1]
+        
+        # Analyze the response to update conversation state
+        content = response_message.content.lower()
+        
+        # Update category if it's been identified
+        if current_category is None and any(cat in content for cat in ["billing", "technical", "account", "product", "shipping"]):
+            for cat in ["billing", "technical", "account", "product", "shipping"]:
+                if cat in content:
+                    current_category = cat
+                    break
+        
+        # Update flow if it's been identified
+        if current_category and current_flow is None:
+            flow_keywords = {
+                "billing": ["refund", "subscription", "payment"],
+                "technical": ["troubleshooting", "installation"],
+                "account": ["reset", "update"],
+                "product": ["information", "compatibility"],
+                "shipping": ["tracking", "return"],
+            }
+            
+            if current_category in flow_keywords:
+                for keyword in flow_keywords[current_category]:
+                    if keyword in content:
+                        current_flow = f"{current_category}_{keyword}"
+                        flow_step = 1
+                        break
+        
+        # Update flow step if we're in a flow
+        if current_flow and flow_step is not None:
+            # Check if we're waiting for user input
+            waiting_for_user = "please provide" in content or "could you tell me" in content or "i need to know" in content
+            
+            # If we're not waiting for user input and we're in a flow, increment the step
+            if not waiting_for_user:
+                flow_step += 1
+            
+            # Return the updated state
+            return {
+                "messages": result["messages"],
+                "discussion_id": discussion_id,
+                "current_category": current_category,
+                "current_flow": current_flow,
+                "flow_step": flow_step,
+                "metadata": metadata,
+                "waiting_for_user": waiting_for_user,
+            }
+        
+        # If we're not in a flow yet, just return the response
+        return {
+            "messages": result["messages"],
+            "discussion_id": discussion_id,
+            "current_category": current_category,
+            "current_flow": current_flow,
+            "flow_step": flow_step,
+            "metadata": metadata,
+            "waiting_for_user": False,
+        }
+
+
 def create_orchestrator_system(
-    model_name: str = "anthropic/claude-3-5-sonnet-20240620",
-) -> Any:
+    model_name: str = "openai/gpt-4o",
+) -> OrchestratorSystem:
     """Create the customer service orchestrator system.
     
     This function sets up a supervisor agent system for customer service, with specialized agents
@@ -83,100 +184,26 @@ Remember to be professional, empathetic, and solution-oriented in all interactio
         prompt=supervisor_prompt,
         state_schema=State,
         output_mode="last_message",
-        add_handoff_back_messages=True,
+        add_handoff_back_messages=False,
         supervisor_name="orchestrator",
     )
     
-    # Wrap the supervisor system to handle conversation state
-    async def orchestrator_with_state(state: Dict[str, Any]) -> Dict[str, Any]:
-        """Invoke the orchestrator with conversation state handling.
-        
-        This function wraps the supervisor system to handle conversation state,
-        including tracking the current category, flow, and flow step.
-        
-        Args:
-            state: The current state, including messages and conversation metadata.
-            
-        Returns:
-            The updated state with the orchestrator's response.
-        """
-        # Extract conversation state
-        discussion_id = state.get("discussion_id", "")
-        current_category = state.get("current_category")
-        current_flow = state.get("current_flow")
-        flow_step = state.get("flow_step")
-        metadata = state.get("metadata", {})
-        
-        # Create a state object for the supervisor system
-        supervisor_state = {
-            "messages": state["messages"],
-        }
-        
-        # Invoke the supervisor system
-        result = await supervisor_system.ainvoke(supervisor_state)
-        
-        # Extract the response message
-        response_message = result["messages"][-1]
-        
-        # Analyze the response to update conversation state
-        content = response_message.content.lower()
-        
-        # Update category if it's been identified
-        if current_category is None and any(cat in content for cat in ["billing", "technical", "account", "product", "shipping"]):
-            for cat in ["billing", "technical", "account", "product", "shipping"]:
-                if cat in content:
-                    current_category = cat
-                    break
-        
-        # Update flow if it's been identified
-        if current_category and current_flow is None:
-            flow_keywords = {
-                "billing": ["refund", "subscription", "payment"],
-                "technical": ["troubleshooting", "installation"],
-                "account": ["reset", "update"],
-                "product": ["information", "compatibility"],
-                "shipping": ["tracking", "return"],
-            }
-            
-            if current_category in flow_keywords:
-                for keyword in flow_keywords[current_category]:
-                    if keyword in content:
-                        current_flow = f"{current_category}_{keyword}"
-                        flow_step = 1
-                        break
-        
-        # Update flow step if we're in a flow
-        if current_flow and flow_step is not None:
-            # Check if we're waiting for user input
-            waiting_for_user = "please provide" in content or "could you tell me" in content or "i need to know" in content
-            
-            # If we're not waiting for user input and we're in a flow, increment the step
-            if not waiting_for_user:
-                flow_step += 1
-            
-            # Return the updated state
-            return {
-                "messages": result["messages"],
-                "discussion_id": discussion_id,
-                "current_category": current_category,
-                "current_flow": current_flow,
-                "flow_step": flow_step,
-                "metadata": metadata,
-                "waiting_for_user": waiting_for_user,
-            }
-        
-        # If we're not in a flow yet, just return the response
-        return {
-            "messages": result["messages"],
-            "discussion_id": discussion_id,
-            "current_category": current_category,
-            "current_flow": current_flow,
-            "flow_step": flow_step,
-            "metadata": metadata,
-            "waiting_for_user": False,
-        }
+    # Compile the supervisor system before wrapping it
+    compiled_supervisor = supervisor_system.compile()
+    from IPython.display import Image, display
+    from langchain_core.runnables.graph import CurveStyle, MermaidDrawMethod, NodeStyles
+
+    display(
+        Image(
+            compiled_supervisor.get_graph().draw_mermaid_png(
+                draw_method=MermaidDrawMethod.API,
+            )
+        )
+    )
+    breakpoint()
     
-    return orchestrator_with_state
+    # Wrap the compiled supervisor system in our orchestrator class
+    return OrchestratorSystem(compiled_supervisor)
 
 
 # Create the orchestrator system

@@ -5,9 +5,9 @@ This module provides tools for transferring control between agents in a multi-ag
 
 import re
 import uuid
-from typing import Tuple
+from typing import Tuple, List
 
-from langchain_core.messages import AIMessage, ToolMessage, ToolCall
+from langchain_core.messages import AIMessage, ToolMessage, ToolCall, BaseMessage, HumanMessage
 from langchain_core.tools import tool, BaseTool
 from langchain_core.tools.base import InjectedToolCallId
 from langgraph.types import Command
@@ -50,44 +50,29 @@ def create_handoff_tool(*, agent_name: str) -> BaseTool:
         tool_call_id: Annotated[str, InjectedToolCallId],
     ):
         """Ask another agent for help."""
-        tool_message = ToolMessage(
+        message = AIMessage(
             content=f"Successfully transferred to {agent_name}",
-            name=tool_name,
-            tool_call_id=tool_call_id,
         )
         return Command(
             goto=agent_name,
             graph=Command.PARENT,
-            update={"messages": [tool_message]},
+            update={"messages": [message]},
         )
 
     return handoff_to_agent
 
 
-def create_handoff_back_messages(
-    agent_name: str, supervisor_name: str
-) -> Tuple[AIMessage, ToolMessage]:
-    """Create a pair of (AIMessage, ToolMessage) to add to the message history when returning control to the supervisor.
+def create_handoff_back_messages(agent_name: str, supervisor_name: str) -> List[BaseMessage]:
+    """Create messages to indicate a handoff back to the supervisor.
     
     Args:
-        agent_name: The name of the agent transferring control back.
-        supervisor_name: The name of the supervisor to transfer control back to.
+        agent_name: The name of the agent handing back control.
+        supervisor_name: The name of the supervisor receiving control.
         
     Returns:
-        A tuple containing an AIMessage and a ToolMessage for the handoff.
+        A list of messages indicating the handoff.
     """
-    tool_call_id = str(uuid.uuid4())
-    tool_name = f"transfer_back_to_{_normalize_agent_name(supervisor_name)}"
-    tool_calls = [ToolCall(name=tool_name, args={}, id=tool_call_id)]
-    return (
-        AIMessage(
-            content=f"Transferring back to {supervisor_name}",
-            tool_calls=tool_calls,
-            name=agent_name,
-        ),
-        ToolMessage(
-            content=f"Successfully transferred back to {supervisor_name}",
-            name=tool_name,
-            tool_call_id=tool_call_id,
-        ),
-    ) 
+    return [
+        AIMessage(content=f"I've completed my task as {agent_name} and am handing control back to {supervisor_name}."),
+        HumanMessage(content=f"Acknowledged. {supervisor_name} is now in control of the conversation.")
+    ] 

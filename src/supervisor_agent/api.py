@@ -1,7 +1,8 @@
 """API for the customer service supervisor agent system.
 
 This module provides a FastAPI implementation for interacting with the supervisor agent system.
-It handles incoming messages, maintains conversation state, and generates responses.
+It handles incoming messages, maintains conversation state, and generates responses using
+OpenAI's GPT-4o model.
 """
 
 from typing import Dict, List, Optional, Any, Union
@@ -12,6 +13,7 @@ from pydantic import BaseModel, Field
 
 from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 
+from react_agent.helpers import prepare_supervisor_state
 from supervisor_agent.orchestrator import orchestrator
 
 
@@ -109,7 +111,7 @@ async def process_message(request: MessageRequest, background_tasks: BackgroundT
     
     # Add system message if this is a new conversation
     if len(conversation_state.messages) == 1:
-        langchain_messages.append(SystemMessage(content="You are a helpful customer service assistant."))
+        langchain_messages.append(SystemMessage(content="You are a helpful customer service assistant powered by OpenAI's GPT-4o model."))
     
     # Add conversation history
     for msg in conversation_state.messages:
@@ -118,15 +120,17 @@ async def process_message(request: MessageRequest, background_tasks: BackgroundT
         elif msg.role == "assistant":
             langchain_messages.append(AIMessage(content=msg.content))
     
-    # Create state for the orchestrator
-    orchestrator_state = {
-        "messages": langchain_messages,
+    # Create state for the orchestrator using the helper function
+    orchestrator_state = prepare_supervisor_state(langchain_messages)
+    
+    # Add additional state information
+    orchestrator_state.update({
         "discussion_id": discussion_id,
         "metadata": conversation_state.metadata,
         "current_category": conversation_state.current_category,
         "current_flow": conversation_state.current_flow,
         "flow_step": conversation_state.flow_step,
-    }
+    })
     
     # Invoke the orchestrator
     try:
