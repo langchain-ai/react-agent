@@ -48,6 +48,7 @@ Your role is to:
 3. Identify the most suitable flow to handle the request
 4. Follow the steps in the flow to resolve the request
 5. Delegate specific tasks to specialized agents when needed
+6. Maintain conversation context across multiple interactions
 
 You have access to the following specialized agents:
 - knowledge_lookup: For searching the company's knowledge base
@@ -68,6 +69,9 @@ Always follow this process:
 6. Follow the flow steps, delegating to specialized agents when needed
 7. Provide a clear, helpful response to the customer
 
+If you need more information from the customer to proceed with a flow, ask for it and set the "waiting_for_user" flag to true.
+When you receive the customer's response, continue from where you left off.
+
 Remember to be professional, empathetic, and solution-oriented in all interactions.
 """
     
@@ -83,7 +87,96 @@ Remember to be professional, empathetic, and solution-oriented in all interactio
         supervisor_name="orchestrator",
     )
     
-    return supervisor_system
+    # Wrap the supervisor system to handle conversation state
+    async def orchestrator_with_state(state: Dict[str, Any]) -> Dict[str, Any]:
+        """Invoke the orchestrator with conversation state handling.
+        
+        This function wraps the supervisor system to handle conversation state,
+        including tracking the current category, flow, and flow step.
+        
+        Args:
+            state: The current state, including messages and conversation metadata.
+            
+        Returns:
+            The updated state with the orchestrator's response.
+        """
+        # Extract conversation state
+        discussion_id = state.get("discussion_id", "")
+        current_category = state.get("current_category")
+        current_flow = state.get("current_flow")
+        flow_step = state.get("flow_step")
+        metadata = state.get("metadata", {})
+        
+        # Create a state object for the supervisor system
+        supervisor_state = {
+            "messages": state["messages"],
+        }
+        
+        # Invoke the supervisor system
+        result = await supervisor_system.ainvoke(supervisor_state)
+        
+        # Extract the response message
+        response_message = result["messages"][-1]
+        
+        # Analyze the response to update conversation state
+        content = response_message.content.lower()
+        
+        # Update category if it's been identified
+        if current_category is None and any(cat in content for cat in ["billing", "technical", "account", "product", "shipping"]):
+            for cat in ["billing", "technical", "account", "product", "shipping"]:
+                if cat in content:
+                    current_category = cat
+                    break
+        
+        # Update flow if it's been identified
+        if current_category and current_flow is None:
+            flow_keywords = {
+                "billing": ["refund", "subscription", "payment"],
+                "technical": ["troubleshooting", "installation"],
+                "account": ["reset", "update"],
+                "product": ["information", "compatibility"],
+                "shipping": ["tracking", "return"],
+            }
+            
+            if current_category in flow_keywords:
+                for keyword in flow_keywords[current_category]:
+                    if keyword in content:
+                        current_flow = f"{current_category}_{keyword}"
+                        flow_step = 1
+                        break
+        
+        # Update flow step if we're in a flow
+        if current_flow and flow_step is not None:
+            # Check if we're waiting for user input
+            waiting_for_user = "please provide" in content or "could you tell me" in content or "i need to know" in content
+            
+            # If we're not waiting for user input and we're in a flow, increment the step
+            if not waiting_for_user:
+                flow_step += 1
+            
+            # Return the updated state
+            return {
+                "messages": result["messages"],
+                "discussion_id": discussion_id,
+                "current_category": current_category,
+                "current_flow": current_flow,
+                "flow_step": flow_step,
+                "metadata": metadata,
+                "waiting_for_user": waiting_for_user,
+            }
+        
+        # If we're not in a flow yet, just return the response
+        return {
+            "messages": result["messages"],
+            "discussion_id": discussion_id,
+            "current_category": current_category,
+            "current_flow": current_flow,
+            "flow_step": flow_step,
+            "metadata": metadata,
+            "waiting_for_user": False,
+        }
+    
+    return orchestrator_with_state
 
 
 # Create the orchestrator system
