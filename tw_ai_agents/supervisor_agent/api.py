@@ -13,8 +13,8 @@ from pydantic import BaseModel, Field
 
 from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 
-from tw_ai_agent.react_agent.helpers import prepare_supervisor_state
-from tw_ai_agent.supervisor_agent.orchestrator import orchestrator
+from tw_ai_agents.react_agent.helpers import prepare_supervisor_state
+from tw_ai_agents.supervisor_agent.orchestrator import orchestrator
 
 
 # Models for API requests and responses

@@ -8,8 +8,8 @@ from typing import Any
 
 from langgraph.prebuilt.chat_agent_executor import create_react_agent
 
-from tw_ai_agent.react_agent.state import State
-from tw_ai_agent.react_agent.utils import load_chat_model
+from tw_ai_agents.react_agent.state import State
+from tw_ai_agents.react_agent.utils import load_chat_model
 
 
 def create_knowledge_lookup_agent(
