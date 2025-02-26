@@ -1,8 +1,0 @@
-{
-  "dependencies": [".", "..", "..."],
-  "graphs": {
-    "supervisor": "./src/supervisor_agent/supervisor.py:create_supervisor",
-    "orchestrator": "./src/supervisor_agent/orchestrator.py:create_orchestrator_system"
-  },
-  "env": "../.env"
-} 
