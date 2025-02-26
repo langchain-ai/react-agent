@@ -6,10 +6,10 @@ for different tasks such as knowledge lookup, Zendesk data retrieval, and Zendes
 
 from typing import Dict, Any
 
-from react_agent.state import State
-from react_agent.utils import load_chat_model
-from react_agent.helpers import prepare_supervisor_state
-from supervisor_agent.specialized_agents import (
+from src.react_agent.state import State
+from src.react_agent.utils import load_chat_model
+from src.react_agent.helpers import prepare_supervisor_state
+from src.supervisor_agent.specialized_agents import (
     create_knowledge_lookup_agent,
     create_zendesk_retrieval_agent,
     create_zendesk_setter_agent,
@@ -17,8 +17,8 @@ from supervisor_agent.specialized_agents import (
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.store.memory import InMemoryStore
 
-from supervisor_agent.supervisor import create_supervisor
-from supervisor_agent.tools import SUPERVISOR_TOOLS
+from src.supervisor_agent.supervisor import create_supervisor
+from src.supervisor_agent.tools import SUPERVISOR_TOOLS
 
 
 class OrchestratorSystem:

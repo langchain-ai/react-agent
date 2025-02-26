@@ -20,7 +20,7 @@ from langgraph.prebuilt.chat_agent_executor import (
 from langgraph.utils.runnable import RunnableCallable
 from langgraph.prebuilt.tool_executor import ToolExecutor
 
-from supervisor_agent.handoff import (
+from src.supervisor_agent.handoff import (
     create_handoff_tool,
     create_handoff_back_messages,
 )
