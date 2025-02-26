@@ -7,6 +7,7 @@ and coordinate multiple specialized agents in a multi-agent system.
 import inspect
 from typing import Callable, Dict, List, Literal, Optional, Type, Union
 
+from langchain_core.messages import AIMessage, HumanMessage
 from langchain_core.tools import BaseTool
 from langchain_core.language_models import LanguageModelLike
 from langgraph.graph import StateGraph, START
@@ -69,14 +70,8 @@ def _make_call_agent(
             )
 
         if add_handoff_back_messages:
-            # Use AIMessage instead of ToolMessage for handoff back messages
-            from langchain_core.messages import AIMessage, HumanMessage
-            
             # Add handoff back messages using AIMessage and HumanMessage
-            messages.extend([
-                AIMessage(content=f"I've completed my task as {agent.name} and am handing control back to {supervisor_name}."),
-                HumanMessage(content=f"Acknowledged. {supervisor_name} is now in control of the conversation.")
-            ])
+            messages.extend(create_handoff_back_messages(agent.name, supervisor_name))
 
         return {
             **output,

@@ -14,6 +14,9 @@ from supervisor_agent.specialized_agents import (
     create_zendesk_retrieval_agent,
     create_zendesk_setter_agent,
 )
+from langgraph.checkpoint.memory import InMemorySaver
+from langgraph.store.memory import InMemoryStore
+
 from supervisor_agent.supervisor import create_supervisor
 from supervisor_agent.tools import SUPERVISOR_TOOLS
 
@@ -183,24 +186,25 @@ Remember to be professional, empathetic, and solution-oriented in all interactio
         tools=SUPERVISOR_TOOLS,
         prompt=supervisor_prompt,
         state_schema=State,
-        output_mode="last_message",
-        add_handoff_back_messages=False,
+        output_mode="full_history",
+        add_handoff_back_messages=True,
         supervisor_name="orchestrator",
     )
     
     # Compile the supervisor system before wrapping it
+    # checkpointer = InMemorySaver()
+    # store = InMemoryStore()
     compiled_supervisor = supervisor_system.compile()
-    from IPython.display import Image, display
-    from langchain_core.runnables.graph import CurveStyle, MermaidDrawMethod, NodeStyles
+    # from IPython.display import Image, display
+    # from langchain_core.runnables.graph import MermaidDrawMethod
 
-    display(
-        Image(
-            compiled_supervisor.get_graph().draw_mermaid_png(
-                draw_method=MermaidDrawMethod.API,
-            )
-        )
-    )
-    breakpoint()
+    # display(
+    #     Image(
+    #         compiled_supervisor.get_graph().draw_mermaid_png(
+    #             draw_method=MermaidDrawMethod.API,
+    #         )
+    #     )
+    # )
     
     # Wrap the compiled supervisor system in our orchestrator class
     return OrchestratorSystem(compiled_supervisor)

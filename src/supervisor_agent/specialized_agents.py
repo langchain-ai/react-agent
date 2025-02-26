@@ -4,9 +4,8 @@ This module defines specialized agents for different tasks in the customer servi
 such as knowledge lookup, Zendesk data retrieval, and Zendesk data setting.
 """
 
-from typing import Dict, List, Optional, Any
+from typing import Any
 
-from langchain_core.language_models import BaseChatModel
 from langgraph.prebuilt.chat_agent_executor import create_react_agent
 
 from react_agent.state import State
