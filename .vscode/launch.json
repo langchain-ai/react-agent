@@ -27,6 +27,16 @@
             "justMyCode": false,
             "program": "${file}",
             "console": "integratedTerminal"
+        },
+        {
+            "name": "Python Debugger: Server",
+            "type": "debugpy",
+            "request": "launch",
+            "env": {
+                "PYTHONPATH": "."
+            },
+            "program": "${workspaceFolder}/tw_ai_agents/server.py",
+            "console": "integratedTerminal"
         }
     ]
 }

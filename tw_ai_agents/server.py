@@ -29,7 +29,40 @@ class StateRequest(BaseModel):
     state: Dict[str, Any]
 
 
-@app.post("/invoke")
+@app.post(
+    "/invoke",
+    description="Invokes the orchestrator with the provided state",
+    openapi_extra={
+        "requestBody": {
+            "content": {
+                "application/json": {
+                    "examples": {
+                        "basic_query": {
+                            "summary": "Basic account query",
+                            "value": {
+                                "state": {
+                                    "messages": [{"role": "user", "content": "I'm having trouble with my account"}],
+                                    "discussion_id": "123456",
+                                    "metadata": {}
+                                }
+                            }
+                        },
+                        "billing_issue": {
+                            "summary": "Billing issue query",
+                            "value": {
+                                "state": {
+                                    "messages": [{"role": "user", "content": "I need help with my subscription payment"}],
+                                    "discussion_id": "789012",
+                                    "metadata": {"priority": "high"}
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+)
 async def invoke_orchestrator(state_request: StateRequest):
     try:
         # Call the orchestrator's ainvoke method
