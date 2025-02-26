@@ -3,7 +3,7 @@
     "."
   ],
   "graphs": {
-    "orchestrator": "./src/supervisor_agent/orchestrator.py:orchestrator_graph"
+    "orchestrator": "./tw_ai_agents/supervisor_agent/orchestrator.py:orchestrator_graph"
   },
   "env": ".env"
 }
