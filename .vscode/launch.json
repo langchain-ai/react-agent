@@ -16,6 +16,17 @@
             
             "program": "${file}",
             "console": "integratedTerminal"
+        },
+        {
+            "name": "Python Debugger: Current File (all code)",
+            "type": "debugpy",
+            "request": "launch",
+            "env": {
+                "PYTHONPATH": "."
+              },
+            "justMyCode": false,
+            "program": "${file}",
+            "console": "integratedTerminal"
         }
     ]
 }
