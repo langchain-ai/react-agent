@@ -1,7 +1,9 @@
 {
-  "dependencies": ["."],
+  "dependencies": [
+    "."
+  ],
   "graphs": {
-    "agent": "./src/react_agent/graph.py:graph"
+    "orchestrator": "./src/supervisor_agent/orchestrator.py:orchestrator"
   },
   "env": ".env"
 }
