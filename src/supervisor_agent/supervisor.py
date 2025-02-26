@@ -5,9 +5,8 @@ and coordinate multiple specialized agents in a multi-agent system.
 """
 
 import inspect
-from typing import Callable, Dict, List, Literal, Optional, Type, Union
+from typing import Callable, Dict, List, Literal, Optional, Union
 
-from langchain_core.messages import AIMessage, HumanMessage
 from langchain_core.tools import BaseTool
 from langchain_core.language_models import LanguageModelLike
 from langgraph.graph import StateGraph, START
@@ -19,6 +18,7 @@ from langgraph.prebuilt.chat_agent_executor import (
     create_react_agent,
 )
 from langgraph.utils.runnable import RunnableCallable
+from langgraph.prebuilt.tool_executor import ToolExecutor
 
 from supervisor_agent.handoff import (
     create_handoff_tool,
@@ -140,17 +140,20 @@ def create_supervisor(
 
     handoff_tools = [create_handoff_tool(agent_name=agent.name) for agent in agents]
     all_tools = (tools or []) + handoff_tools
-
+    # all_tools = handoff_tools
     if (
         hasattr(model, "bind_tools")
         and "parallel_tool_calls" in inspect.signature(model.bind_tools).parameters
     ):
         model = model.bind_tools(all_tools, parallel_tool_calls=False)
 
+    # Convert tools to the expected format if needed
+    tool_executor = ToolExecutor(all_tools) if all_tools else None
+    
     supervisor_agent = create_react_agent(
         name=supervisor_name,
         model=model,
-        tools=all_tools,
+        tools=tool_executor,  # Pass the tool executor instead of the raw tools list
         prompt=prompt,
         state_schema=state_schema,
     )

@@ -4,7 +4,7 @@ This module provides tools for the customer service system, including mock imple
 for category and flow retrieval from an external API.
 """
 
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Dict, List
 
 from langchain_core.tools import tool
 

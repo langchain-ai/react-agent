@@ -5,19 +5,16 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Dict, Any, List, Optional
 
-from langchain_core.messages import BaseMessage
+from langgraph.graph import MessagesState
 from typing_extensions import TypedDict
 
 
-class State(TypedDict, total=False):
+class State(MessagesState):
     """State schema for the agent.
     
     This defines the state schema that LangGraph expects for React agents.
     It must include 'messages' and 'remaining_steps' as per LangGraph requirements.
     """
-    
-    messages: List[BaseMessage]
-    """Messages in the conversation."""
     
     remaining_steps: int
     """Number of remaining steps before termination."""

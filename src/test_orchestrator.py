@@ -12,7 +12,7 @@ from supervisor_agent.orchestrator import create_orchestrator_system
 # Load environment variables
 load_dotenv()
 
-async def test_orchestrator():
+def test_orchestrator():
     """Test the orchestrator system with a simple query."""
     print("Testing orchestrator...")
     
@@ -30,7 +30,7 @@ async def test_orchestrator():
     
     try:
         # Call the orchestrator
-        response = await orchestrator.ainvoke(initial_state)
+        response = orchestrator.invoke(initial_state)
         
         # Print the response
         print("\nOrchestrator response:")
@@ -58,7 +58,7 @@ if __name__ == "__main__":
         exit(1)
     
     # Run the test
-    success = asyncio.run(test_orchestrator())
+    success = test_orchestrator()
     
     # Exit with appropriate code
     exit(0 if success else 1) 

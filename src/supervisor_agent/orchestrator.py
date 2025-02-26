@@ -32,7 +32,7 @@ class OrchestratorSystem:
         """
         self.supervisor_system = supervisor_system
     
-    async def ainvoke(self, state: Dict[str, Any]) -> Dict[str, Any]:
+    def invoke(self, state: Dict[str, Any]) -> Dict[str, Any]:
         """Invoke the orchestrator with conversation state handling.
         
         This method wraps the supervisor system to handle conversation state,
@@ -56,7 +56,7 @@ class OrchestratorSystem:
         
         print(f"Supervisor state: {supervisor_state}")
         # Invoke the supervisor system
-        result = await self.supervisor_system.ainvoke(supervisor_state)
+        result = self.supervisor_system.invoke(supervisor_state, debug=True)
         print(f"Supervisor result: {result}")
         
         # Extract the response message
