@@ -14,12 +14,6 @@ class ZendeskAgentWithTools(BaseAgent):
         super().__init__(*args, **kwargs)
         self.node_name = "ZendeskSearcher"
         self.system_prompt = system_prompt
-        self.system_prompt = "You are a supervisor tasked with managing a conversation between the"
-        f" following workers: Booh. Given the following user request,"
-        " respond with the worker to act next. Each worker will perform a"
-        " task and respond with their results and status. When finished,"
-        " respond with FINISH."
-
     @tool
     def get_ticket_info(self, ticket_id: str):
         """
@@ -70,13 +64,21 @@ class ZendeskAgentWithTools(BaseAgent):
         )
 
         research_builder.add_edge(START, self.node_name)
-        research_graph = research_builder.compile()
+        research_graph = research_builder.compile(debug=True)
         return research_graph
 
 
 if __name__ == "__main__":
 
-    zendesk_agent = ZendeskAgentWithTools(system_prompt="ciao")
+    system_prompt = """
+    You are a supervisor agent which should solve a ticket by using some tool.
+    You can use the following workers: get_comments, get_ticket.
+    Given the following user request, respond with the worker to act next.
+    Each worker will perform a task and respond with their results and status.
+    When finished, respond with FINISH.
+    """
+
+    zendesk_agent = ZendeskAgentWithTools(system_prompt=system_prompt)
     graph = zendesk_agent.get_compiled_graph()
 
     for s in graph.stream(
