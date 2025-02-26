@@ -4,6 +4,6 @@ This package provides a supervisor agent system for customer service,
 with specialized agents for different tasks.
 """
 
-from src.supervisor_agent.orchestrator import orchestrator
+from tw_ai_agent.supervisor_agent.orchestrator import orchestrator
 
 __all__ = ["orchestrator"] 

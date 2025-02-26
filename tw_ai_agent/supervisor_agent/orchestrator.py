@@ -9,16 +9,16 @@ from typing import Any, Dict
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.store.memory import InMemoryStore
 
-from src.react_agent.helpers import prepare_supervisor_state
-from src.react_agent.state import State
-from src.react_agent.utils import load_chat_model
-from src.supervisor_agent.specialized_agents import (
+from tw_ai_agent.react_agent.helpers import prepare_supervisor_state
+from tw_ai_agent.react_agent.state import State
+from tw_ai_agent.react_agent.utils import load_chat_model
+from tw_ai_agent.supervisor_agent.specialized_agents import (
     create_knowledge_lookup_agent,
     create_zendesk_retrieval_agent,
     create_zendesk_setter_agent,
 )
-from src.supervisor_agent.supervisor import create_supervisor
-from src.supervisor_agent.tools import SUPERVISOR_TOOLS
+from tw_ai_agent.supervisor_agent.supervisor import create_supervisor
+from tw_ai_agent.supervisor_agent.tools import SUPERVISOR_TOOLS
 
 
 class OrchestratorSystem:
