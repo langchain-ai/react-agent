@@ -1,6 +1,8 @@
+from typing import List, Any, TypedDict
+
 from langchain_core.tools import tool
 from langchain_openai import ChatOpenAI
-from langgraph.constants import START
+from langgraph.constants import START, END
 from langgraph.graph import StateGraph
 
 from tw_ai_agents.agents.base_agent import BaseAgent, make_supervisor_node
@@ -9,31 +11,41 @@ from tw_ai_agents.agents.base_agent import State
 llm = ChatOpenAI(model="gpt-4o")
 
 
-class ZendeskAgentWithTools(BaseAgent):
-    def __init__(self, system_prompt: str, *args, **kwargs):
+class BaseCaseSpecificAgent(BaseAgent):
+    def __init__(
+        self,
+        node_name: str,
+        system_prompt: str,
+        sub_agents: List[Any],
+        *args,
+        **kwargs
+    ):
         super().__init__(*args, **kwargs)
-        self.node_name = "ZendeskSearcher"
+        self.node_name = node_name
         self.system_prompt = system_prompt
+        self.sub_agents = sub_agents
 
-    @tool
-    def get_ticket_info(self, ticket_id: str):
-        """
-        Tool to get the ticket info from a zendesk ticket
-        :params:
-            ticket_id: The ID of the ticket to get information for
-        :return: The ticket information
-        """
-        return f"This is the ticket {ticket_id}. Infos: very nice ticket"
+    def make_supervisor_node(self, members: list[str], system_prompt: str):
+        options = [END] + members
 
-    @tool
-    def get_comments(self, ticket_id: str):
-        """
-        Tool to get the comments from a zendesk ticket
-        :params:
-            ticket_id: The ID of the ticket to get comments for
-        :return: The comments from the ticket
-        """
-        return f"This is are the comments from the ticket {ticket_id}: [comment1, comment2, comment3]"
+        class Router(TypedDict):
+            """Worker to route to next. If no workers needed, route to FINISH."""
+
+            next: str  # Will be one of the options
+
+        def supervisor_node(state: State) -> Command[str]:
+            """An LLM-based router."""
+            messages = [
+                {"role": "system", "content": system_prompt},
+            ] + state["messages"]
+            response = llm.with_structured_output(Router).invoke(messages)
+            goto = response["next"]
+            if goto == "FINISH":
+                goto = END
+
+            return Command(goto=goto, update={"next": goto})
+
+        return supervisor_node
 
     def get_compiled_graph(self):
         research_supervisor_node = make_supervisor_node(

@@ -10,7 +10,8 @@ from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.store.memory import InMemoryStore
 
 from tw_ai_agents.react_agent.helpers import prepare_supervisor_state
-from tw_ai_agents.react_agent.state import State
+from tw_ai_agents.agents.base_agent import State
+
 from tw_ai_agents.react_agent.utils import load_chat_model
 from tw_ai_agents.supervisor_agent.specialized_agents import (
     create_knowledge_lookup_agent,
@@ -230,5 +231,5 @@ Remember to be professional, empathetic, and solution-oriented in all interactio
 
 
 # Create the orchestrator system
-orchestrator = create_orchestrator_system()
-orchestrator_graph = orchestrator.supervisor_system
+# orchestrator = create_orchestrator_system()
+# orchestrator_graph = orchestrator.supervisor_system
