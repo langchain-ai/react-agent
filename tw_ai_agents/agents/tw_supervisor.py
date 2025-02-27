@@ -272,7 +272,6 @@ async def run_supervisor(state: State) -> Dict:
                             "tool_id": tool_call.get("id", "unknown")
                         })
             
-        result["metadata"]["available_agents"] = available_agents
         result["metadata"]["tool_calls"] = tool_calls
             
         return result
