@@ -1,5 +1,5 @@
 import inspect
-from typing import Callable, Dict, List, Literal, Optional, Union
+from typing import Callable, List, Optional, Union
 
 from langchain_core.language_models import LanguageModelLike
 from langchain_core.messages import HumanMessage
@@ -13,7 +13,6 @@ from langgraph.prebuilt.chat_agent_executor import (
     create_react_agent,
 )
 from langgraph.prebuilt.tool_executor import ToolExecutor
-from langgraph.utils.runnable import RunnableCallable
 
 from tw_ai_agents.agents.base_agent import State
 from tw_ai_agents.agents.supervisor_utils import (
@@ -22,18 +21,11 @@ from tw_ai_agents.agents.supervisor_utils import (
     _make_call_agent,
 )
 from tw_ai_agents.agents.zendesk_agent_tools import ZendeskAgentWithTools
-from tw_ai_agents.react_agent.utils import load_chat_model
-from tw_ai_agents.supervisor_agent.handoff import (
-    create_handoff_back_messages,
+from tw_ai_agents.agents.utils import load_chat_model
+from tw_ai_agents.agents.handoff import (
     create_handoff_tool,
 )
-from tw_ai_agents.supervisor_agent.specialized_agents import (
-    create_knowledge_lookup_agent,
-    create_zendesk_retrieval_agent,
-    create_zendesk_setter_agent,
-)
-from tw_ai_agents.supervisor_agent.tools import (
-    SUPERVISOR_TOOLS,
+from tw_ai_agents.tools.tools import (
     get_knowledge_info,
     set_ticket_info,
     set_ticket_shipping_address,
@@ -249,17 +241,6 @@ supervisor_system = TWSupervisor(
 # Compile the supervisor system
 compiled_supervisor = supervisor_system.get_supervisor_compiled_graph()
 
-graph = compiled_supervisor.get_graph()
-png = graph.draw_mermaid_png()
-with open("tw_supervisor.png", "wb") as f:
-    f.write(png)
-
-account_address_update_case_graph = (
-    account_address_update_case.get_supervisor_compiled_graph().get_graph()
-)
-png = account_address_update_case_graph.draw_mermaid_png()
-with open("account_address_update_case.png", "wb") as f:
-    f.write(png)
 
 if __name__ == "__main__":
     messages = [

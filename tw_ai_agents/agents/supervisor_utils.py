@@ -4,7 +4,7 @@ from langchain_core.messages import ToolMessage, HumanMessage, BaseMessage
 from langgraph.graph.state import CompiledStateGraph
 from langgraph.utils.runnable import RunnableCallable
 
-from tw_ai_agents.supervisor_agent.handoff import create_handoff_back_messages
+from tw_ai_agents.agents.handoff import create_handoff_back_messages
 
 OutputMode = Literal["full_history", "last_message"]
 """Mode for adding agent outputs to the message history in the multi-agent workflow
