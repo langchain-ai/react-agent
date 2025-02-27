@@ -1,7 +1,10 @@
 from typing import (
+    Any,
     Callable,
+    Dict,
     List,
     Literal,
+    Optional,
     Sequence,
     TypedDict,
     Union,
@@ -23,8 +26,10 @@ from typing_extensions import TypedDict
 
 
 class State(MessagesState):
+    """State for the agent system, extending MessagesState with metadata for tool tracking."""
     next: str
-    remaining_steps: int = 10
+    remaining_steps: int
+    metadata: Dict[str, Any]
 
 
 class BaseAgent:

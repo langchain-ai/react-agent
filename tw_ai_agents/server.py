@@ -1,16 +1,10 @@
-"""Server for the customer service supervisor agent API.
-
-This module provides a server for the customer service supervisor agent API.
-"""
-
 import os
 import uuid
-from typing import Dict, Any, List
+from typing import Dict, Any, List, cast
 import uvicorn
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
-from langchain_core.messages import HumanMessage
-from pydantic import BaseModel
+from langchain_core.messages import HumanMessage, BaseMessage
 
 from tw_ai_agents.agents.tw_supervisor import run_supervisor
 from tw_ai_agents.agents.base_agent import State
@@ -18,17 +12,13 @@ from tw_ai_agents.pydantic_models.agent_models import (
     AgentResponseRequest,
     AgentResponseModel,
 )
-from tw_ai_agents.instruction_optimizer import (
+from instruction_optimizer.instruction_optimizer import (
     InstructionOptimizationRequest,
     InstructionOptimizationResponse,
     optimize_instruction,
 )
 
-
-# Load environment variables
 load_dotenv()
-
-# Get port from environment variable or use default
 PORT = int(os.getenv("PORT", "8000"))
 
 app = FastAPI()
@@ -80,28 +70,36 @@ async def process_agent_response(request: AgentResponseRequest) -> AgentResponse
         HTTPException: If there's an error processing the message.
     """
     try:
+        # Create the initial state with message
         message = HumanMessage(content=request.message_text)
-        state_dict = {
+
+        # Initialize a proper State object using dict notation
+        initial_state: State = {
             "messages": [message],
             "next": "tw_supervisor",
-            "discussion_id": request.discussion_id,
+            "metadata": {"discussion_id": request.discussion_id},
+            "remaining_steps": 10
         }
 
-        response: State = await run_supervisor(state_dict)
+        # Run the supervisor with proper State object
+        response = await run_supervisor(initial_state)
 
         if response and "messages" in response and response["messages"]:
             # Get the last message
-            last_message = response["messages"][-1]
+            messages = cast(List[BaseMessage], response["messages"])
+            last_message = messages[-1]
 
-            message_id = last_message.id or str(uuid.uuid4())
-
-            # TODO: Get run_supervisor to return metadata (tool calls, etc)
+            message_id = getattr(last_message, "id", None) or str(uuid.uuid4())
 
             metadata: Dict[str, Any] = {}
+            if "metadata" in response and response["metadata"]:
+                metadata = response["metadata"]
+
+            metadata["discussion_id"] = request.discussion_id
 
             return AgentResponseModel(
                 message_type="agent",
-                message_text=last_message.content,
+                message_text=str(last_message.content),
                 message_id=message_id,
                 metadata=metadata
             )
@@ -129,7 +127,6 @@ async def process_agent_response(request: AgentResponseRequest) -> AgentResponse
 async def api_optimize_instruction(request: InstructionOptimizationRequest) -> InstructionOptimizationResponse:
     """API endpoint to optimize an instruction for better AI responses."""
     return await optimize_instruction(request)
-
 
 if __name__ == "__main__":
     # Run the server
