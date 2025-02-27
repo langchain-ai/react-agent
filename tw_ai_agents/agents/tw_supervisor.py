@@ -34,6 +34,7 @@ from tw_ai_agents.supervisor_agent.specialized_agents import (
 from tw_ai_agents.supervisor_agent.tools import (
     SUPERVISOR_TOOLS,
     set_ticket_info,
+    get_knowledge_info,
 )
 
 
@@ -42,11 +43,12 @@ class TWSupervisor:
         self,
         agents: List[Union[CompiledStateGraph, "TWSupervisor"]],
         model: LanguageModelLike,
+        description: str,
         tools: Optional[List[Union[Callable, BaseTool]]] = None,
         prompt: Optional[Prompt] = None,
         state_schema: StateSchemaType = AgentState,
         output_mode: OutputMode = "last_message",
-        add_handoff_back_messages: bool = True,
+        add_handoff_back_messages: bool = False,
         supervisor_name: str = "supervisor",
     ):
         """
@@ -73,6 +75,7 @@ class TWSupervisor:
         self.add_handoff_back_messages = add_handoff_back_messages
         self.supervisor_name = supervisor_name
         self.compiled_graph = None
+        self.description = description
 
     def _process_agent(self, agent):
         """Process an agent which could be a CompiledStateGraph or another TWSupervisor."""
@@ -88,10 +91,13 @@ class TWSupervisor:
         Returns:
             A StateGraph representing the supervisor agent system.
         """
-        processed_agents = [self._process_agent(agent) for agent in self.agents]
+        processed_agents = [
+            (self._process_agent(agent), agent.description)
+            for agent in self.agents
+        ]
 
         agent_names = set()
-        for agent in processed_agents:
+        for agent, description in processed_agents:
             if agent.name is None or agent.name == "LangGraph":
                 raise ValueError(
                     "Please specify a name when you create your agent, either via `create_react_agent(..., name=agent_name)` "
@@ -108,9 +114,9 @@ class TWSupervisor:
         handoff_tools = [
             create_handoff_tool(
                 agent_name=agent.name,
-                # agent_description=agent.prompt
+                agent_description=description,
             )
-            for agent in processed_agents
+            for agent, description in processed_agents
         ]
         all_tools = (self.tools or []) + handoff_tools
         # all_tools = handoff_tools
@@ -137,7 +143,7 @@ class TWSupervisor:
         builder = StateGraph(self.state_schema)
         builder.add_node(supervisor_agent, destinations=tuple(agent_names))
         builder.add_edge(START, supervisor_agent.name)
-        for agent in processed_agents:
+        for agent, description in processed_agents:
             builder.add_node(
                 agent.name,
                 _make_call_agent(
@@ -192,6 +198,7 @@ zendesk_getter_with_tools = TWSupervisor(
     prompt=zst.system_prompt,
     state_schema=State,
     supervisor_name=zst.node_name,
+    description=zst.description,
 )
 zendesk_setter_with_tools = TWSupervisor(
     agents=[],
@@ -199,28 +206,32 @@ zendesk_setter_with_tools = TWSupervisor(
     tools=[set_ticket_info],
     prompt=zst.system_prompt,
     state_schema=State,
-    supervisor_name=zst.node_name,
+    supervisor_name="zendesk_setter",
+    description="Agent able to set information in Zendesk about tickets, address, etc.",
 )
 
 account_address_update_case = TWSupervisor(
     agents=[
-        zendesk_getter_with_tools.get_graph(),
-        zendesk_setter_with_tools.get_graph(),
+        zendesk_getter_with_tools,
+        zendesk_setter_with_tools,
     ],
     model=model,
     # tools=SUPERVISOR_TOOLS,
     prompt="You are an agent able to update address information in the Zendesk ticket.",
     state_schema=State,
     supervisor_name="account_address_update_case",
+    description="Agent able to update address information in the Zendesk ticket.",
 )
 
 # Now, create a second supervisor that could potentially be called by the main supervisor
 knowledge_handler_system = TWSupervisor(
-    agents=[knowledge_agent],
+    agents=[],
     model=model,
+    tools=[get_knowledge_info],
     prompt="You are an agent specialized in knowledge information lookup.",
     state_schema=State,
     supervisor_name="knowledge_handler",
+    description="Agent able to lookup knowledge information.",
 )
 
 # Create bidirectional relationship by passing each supervisor to the other
@@ -228,13 +239,14 @@ knowledge_handler_system = TWSupervisor(
 # supervisors as they are, and they'll compile their graphs when needed
 supervisor_system = TWSupervisor(
     agents=[
-        knowledge_handler_system.get_graph(),  # Pass the supervisor directly
-        account_address_update_case.get_graph(),  # Pass the supervisor directly
+        knowledge_handler_system,  # Pass the supervisor directly
+        account_address_update_case,  # Pass the supervisor directly
     ],
     model=model,
     prompt=SUPERVISOR_PROMPT,
     state_schema=State,
     supervisor_name="tw_supervisor",
+    description="Agent able to handle the flow of the conversation.",
 )
 # supervisor_system = create_react_agent(
 #     name="tw_supervisor",
@@ -252,7 +264,7 @@ if __name__ == "__main__":
     messages = [
         {
             "role": "user",
-            "content": "Hello, how are you?\nI'd like to know which are the comments for the ticket ID 25432432.",
+            "content": "Hello, how are you?\nI'd like to change the shipping address for my ticket 14983 to Heinrichstrasse 237, Zurich, Switzerland.",
         },
     ]
     state = State(messages=messages)

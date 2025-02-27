@@ -261,6 +261,21 @@ def set_ticket_info(ticket_id: str, info_dict: Dict[str, Any]) -> str:
 
     return "Ticket info set"
 
+@tool("get_knowledge_info")
+def get_knowledge_info(query: str) -> str:
+    """Get information from the knowledge base.
+
+    This tool retrieves information from the knowledge base based on the provided query.
+
+    Args:
+        query: The query to search the knowledge base for.
+
+    Returns:
+        A string containing the information from the knowledge base.
+    """
+
+    return "Knowledge info retrieved"
+
 
 # List of all tools available for the supervisor agent
 SUPERVISOR_TOOLS = [
