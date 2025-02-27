@@ -1,5 +1,6 @@
-from typing import Callable, Dict, Literal
+from typing import Callable, Dict, Literal, Tuple, Optional, List
 
+from langchain_core.messages import ToolMessage, HumanMessage, BaseMessage
 from langgraph.graph.state import CompiledStateGraph
 from langgraph.utils.runnable import RunnableCallable
 
@@ -18,6 +19,7 @@ def _make_call_agent(
     output_mode: OutputMode,
     add_handoff_back_messages: bool,
     supervisor_name: str,
+    input_mode: OutputMode = "last_message",
 ) -> Callable[[Dict], Dict]:
     """Create a function that calls an agent and processes its output.
 
@@ -36,10 +38,12 @@ def _make_call_agent(
             f"Needs to be one of {OutputMode.__args__}"  # type: ignore
         )
 
-    def _process_output(output: Dict) -> Dict:
+    def _process_output(
+        output: Dict, old_messages: Optional[Dict] = None
+    ) -> Dict:
         messages = output["messages"]
         if output_mode == "full_history":
-            pass
+            messages = old_messages + messages
         elif output_mode == "last_message":
             messages = messages[-1:]
         else:
@@ -59,13 +63,29 @@ def _make_call_agent(
             "messages": messages,
         }
 
+    def _process_input(input: Dict) -> Tuple[Dict, Optional[List[BaseMessage]]]:
+        if input_mode == "last_message":
+            # return on the last ToolMessage, convert it to a HumanMessage
+            last_message = input["messages"][-1]
+            other_messages = input["messages"][:-1]
+            if isinstance(last_message, ToolMessage):
+                last_message = HumanMessage(last_message.content)
+            input["messages"] = [last_message]
+            return input, other_messages
+        elif input_mode == "full_history":
+            return input, None
+        else:
+            raise ValueError(f"Invalid input mode: {input_mode}")
+
     def call_agent(state: Dict) -> Dict:
+        state, old_messages = _process_input(state)
         output = agent.invoke(state)
-        return _process_output(output)
+        return _process_output(output, old_messages)
 
     async def acall_agent(state: Dict) -> Dict:
+        state, old_messages = _process_input(state)
         output = await agent.ainvoke(state)
-        return _process_output(output)
+        return _process_output(output, old_messages)
 
     return RunnableCallable(call_agent, acall_agent)
 

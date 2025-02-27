@@ -259,7 +259,25 @@ def set_ticket_info(ticket_id: str, info_dict: Dict[str, Any]) -> str:
         A string indicating that the ticket info has been set.
     """
 
-    return "Ticket info set"
+    return f"Ticket info of ticket {ticket_id} set to {info_dict}"
+
+
+@tool("set_ticket_shipping_address")
+def set_ticket_shipping_address(ticket_id: str, address: str) -> str:
+    """Set the shipping address for a specific ticket.
+
+    This tool sets the shipping address for a specific ticket.
+
+    Args:
+        ticket_id: The ID of the ticket to set the shipping address for.
+        address: The shipping address to set for the ticket.
+
+    Returns:
+        A string indicating that the shipping address has been set.
+    """
+
+    return f"Shipping address of ticket {ticket_id} set to {address}"
+
 
 @tool("get_knowledge_info")
 def get_knowledge_info(query: str) -> str:

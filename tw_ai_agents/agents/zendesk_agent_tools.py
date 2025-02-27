@@ -12,12 +12,13 @@ llm = ChatOpenAI(model="gpt-4o")
 class ZendeskAgentWithTools(BaseAgent):
     def __init__(self, system_prompt: Optional[str] = None, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.node_name = "ZendeskSearcher"
+        self.node_name = "Zendesk Info Searcher"
         base_system_prompt = """You are a helpful assistant that can use tools to answer questions about Zendesk tickets.
         Your goal is to provide accurate information by using the available tools to search for and retrieve ticket information.
         """
         self.system_prompt = system_prompt or base_system_prompt
         self.description = "You are a helpful assistant that can use tools to answer questions about Zendesk tickets."
+
     @tool
     @staticmethod
     def get_ticket_info(ticket_id: str):

@@ -33,8 +33,9 @@ from tw_ai_agents.supervisor_agent.specialized_agents import (
 )
 from tw_ai_agents.supervisor_agent.tools import (
     SUPERVISOR_TOOLS,
-    set_ticket_info,
     get_knowledge_info,
+    set_ticket_info,
+    set_ticket_shipping_address,
 )
 
 
@@ -203,21 +204,27 @@ zendesk_getter_with_tools = TWSupervisor(
 zendesk_setter_with_tools = TWSupervisor(
     agents=[],
     model=model,
-    tools=[set_ticket_info],
+    tools=[set_ticket_info, set_ticket_shipping_address],
     prompt=zst.system_prompt,
     state_schema=State,
-    supervisor_name="zendesk_setter",
+    supervisor_name="Zendesk Ticket Info Setter",
     description="Agent able to set information in Zendesk about tickets, address, etc.",
 )
 
+# Define prompt for account_address_update_case separately
+subagents = [zendesk_getter_with_tools, zendesk_setter_with_tools]
+account_address_update_prompt = "You are an agent able to call tools to read info from Zendesk tickets about addresses and update them with a Zendesk Ticket setter tool.\nYou can't solve the issue directly, but you can call specialized agents to help you."
+account_address_update_prompt += f"\nPossible tools are: \n"
+for subagent in subagents:
+    account_address_update_prompt += (
+        f" - {subagent.supervisor_name}: {subagent.description}\n"
+    )
+
 account_address_update_case = TWSupervisor(
-    agents=[
-        zendesk_getter_with_tools,
-        zendesk_setter_with_tools,
-    ],
+    agents=subagents,
     model=model,
     # tools=SUPERVISOR_TOOLS,
-    prompt="You are an agent able to update address information in the Zendesk ticket.",
+    prompt=account_address_update_prompt,
     state_schema=State,
     supervisor_name="account_address_update_case",
     description="Agent able to update address information in the Zendesk ticket.",
@@ -259,6 +266,17 @@ supervisor_system = TWSupervisor(
 # Compile the supervisor system
 compiled_supervisor = supervisor_system.get_supervisor_compiled_graph()
 
+graph = compiled_supervisor.get_graph()
+png = graph.draw_mermaid_png()
+with open("tw_supervisor.png", "wb") as f:
+    f.write(png)
+
+account_address_update_case_graph = (
+    account_address_update_case.get_supervisor_compiled_graph().get_graph()
+)
+png = account_address_update_case_graph.draw_mermaid_png()
+with open("account_address_update_case.png", "wb") as f:
+    f.write(png)
 
 if __name__ == "__main__":
     messages = [
