@@ -1,60 +1,49 @@
-"""Server for the customer service supervisor agent API.
-
-This module provides a server for the customer service supervisor agent API.
-"""
-
 import os
+import uuid
+from typing import Dict, Any, List, cast
 import uvicorn
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
-from typing import Dict, Any
+from langchain_core.messages import HumanMessage, BaseMessage
 
-from supervisor_agent.api import app
-from supervisor_agent.orchestrator import create_orchestrator_system
+from tw_ai_agents.agents.tw_supervisor import run_supervisor
+from tw_ai_agents.agents.base_agent import State
+from tw_ai_agents.pydantic_models.agent_models import (
+    AgentResponseRequest,
+    AgentResponseModel,
+)
 
-# Load environment variables
+
 load_dotenv()
-
-# Get port from environment variable or use default
 PORT = int(os.getenv("PORT", "8000"))
 
 app = FastAPI()
 
-# Initialize the orchestrator system
-orchestrator = create_orchestrator_system()
-
-
-class StateRequest(BaseModel):
-    state: Dict[str, Any]
-
-
 @app.post(
-    "/invoke",
-    description="Invokes the orchestrator with the provided state",
+    "/agent_response",
+    response_model=AgentResponseModel,
+    description="Processes an agent or user message and returns a response",
     openapi_extra={
         "requestBody": {
             "content": {
                 "application/json": {
                     "examples": {
-                        "basic_query": {
-                            "summary": "Basic account query",
+                        "typewise_user_account": {
+                            "summary": "User message example",
                             "value": {
-                                "state": {
-                                    "messages": [{"role": "user", "content": "I'm having trouble with my account"}],
-                                    "discussion_id": "123456",
-                                    "metadata": {}
-                                }
+                                "message_type": "user",
+                                "message_text": "Hello, how are you?\nI'd like to change the shipping address for my ticket 14983 to Heinrichstrasse 237, Zurich, Switzerland. Please make sure to double check that this was actually done!",
+                                "discussion_id": "123456",
+                                "client": "typewise"
                             }
                         },
-                        "billing_issue": {
-                            "summary": "Billing issue query",
+                        "vtours_flight_rebooking": {
+                            "summary": "Vtours flight rebooking",
                             "value": {
-                                "state": {
-                                    "messages": [{"role": "user", "content": "I need help with my subscription payment"}],
-                                    "discussion_id": "789012",
-                                    "metadata": {"priority": "high"}
-                                }
+                                "message_type": "user",
+                                "message_text": "I need to rebook my flight",
+                                "discussion_id": "123456",
+                                "client": "vtours"
                             }
                         }
                     }
@@ -63,14 +52,65 @@ class StateRequest(BaseModel):
         }
     }
 )
-async def invoke_orchestrator(state_request: StateRequest):
+async def process_agent_response(request: AgentResponseRequest) -> AgentResponseModel:
+    """Process an agent or user message and generate a response.
+    
+    Args:
+        request: The AgentResponseRequest containing message details.
+        
+    Returns:
+        AgentResponseModel: The response with message details and metadata.
+        
+    Raises:
+        HTTPException: If there's an error processing the message.
+    """
     try:
-        # Call the orchestrator's ainvoke method
-        # response = await orchestrator.ainvoke(state_request.state)
-        response = orchestrator.invoke(state_request.state)
-        return response
+        # Create the initial state with message
+        message = HumanMessage(content=request.message_text)
+        
+        # Initialize a proper State object using dict notation
+        initial_state: State = {
+            "messages": [message],
+            "next": "tw_supervisor", 
+            "metadata": {"discussion_id": request.discussion_id},
+            "remaining_steps": 10
+        }
+
+        # Run the supervisor with proper State object
+        response = await run_supervisor(initial_state)
+
+        if response and "messages" in response and response["messages"]:
+            # Get the last message
+            messages = cast(List[BaseMessage], response["messages"])
+            last_message = messages[-1]
+
+            message_id = getattr(last_message, "id", None) or str(uuid.uuid4())
+
+            metadata: Dict[str, Any] = {}
+            if "metadata" in response and response["metadata"]:
+                metadata = response["metadata"]
+                    
+            metadata["discussion_id"] = request.discussion_id
+
+            return AgentResponseModel(
+                message_type="agent",
+                message_text=str(last_message.content),
+                message_id=message_id,
+                metadata=metadata
+            )
+        else:
+            return AgentResponseModel(
+                message_type="agent",
+                message_text="I'm sorry, I couldn't process your request at this time.",
+                message_id=str(uuid.uuid4()),
+                metadata={"status": "error", "discussion_id": request.discussion_id}
+            )
+
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error processing agent response: {str(e)}"
+        )
 
 
 if __name__ == "__main__":
