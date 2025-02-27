@@ -1,7 +1,7 @@
 langchain>=0.3.19
 langchain-core>=0.3.39
 langchain-community>=0.3.18
-langgraph>=0.0.20
+langgraph>=0.3.0
 typing-extensions>=4.5.0
 pydantic>=2.0.0
 fastapi>=0.104.0
@@ -9,4 +9,5 @@ uvicorn>=0.23.2
 python-dotenv>=1.0.0
 httpx>=0.25.0
 openai>=1.10.0
-langchain-openai>=0.0.5 
+langchain-openai>=0.0.5
+langgraph-checkpoint-sqlite

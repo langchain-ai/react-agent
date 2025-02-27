@@ -1,23 +1,29 @@
-from typing import Optional
-
+from langchain import hub
 from langchain_core.tools import tool
 from langchain_openai import ChatOpenAI
-from langgraph.prebuilt import create_react_agent
 
-from tw_ai_agents.agents.base_agent import BaseAgent
+from tw_ai_agents.tools.base_agent_tools import BaseAgentWithTools
 
 llm = ChatOpenAI(model="gpt-4o")
 
 
-class ZendeskAgentWithTools(BaseAgent):
-    def __init__(self, system_prompt: Optional[str] = None, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.node_name = "zendesk_info_searcher"
+class ZendeskAgentWithTools(BaseAgentWithTools):
+    def __init__(self):
+        node_name = "zendesk_info_searcher"
         base_system_prompt = """You are a helpful assistant that can use tools to answer questions about Zendesk tickets.
         Your goal is to provide accurate information by using the available tools to search for and retrieve ticket information.
         """
-        self.system_prompt = system_prompt or base_system_prompt
-        self.description = "You are a helpful assistant that can use tools to answer questions about Zendesk tickets."
+        description = "You are a helpful assistant that can use tools to answer questions about Zendesk tickets."
+        # base_system_prompt = hub.pull(
+        #     "zendesk_info_searcher-system_prompt"
+        # ).content
+        # description = hub.pull("zendesk_info_searcher-description").content
+
+        super().__init__(
+            system_prompt=base_system_prompt,
+            node_name=node_name,
+            description=description,
+        )
 
     @tool
     @staticmethod
@@ -58,35 +64,3 @@ class ZendeskAgentWithTools(BaseAgent):
             self.get_ticket_info,
             self.get_ticket_address,
         ]
-
-    def get_agent(self):
-
-        tool_list = [self.get_comments, self.get_ticket_info]
-        agent = create_react_agent(
-            llm, tools=tool_list, prompt=self.system_prompt, name=self.node_name
-        )
-        return agent
-
-
-if __name__ == "__main__":
-
-    system_prompt = """You are a helpful assistant that can use tools to answer questions about Zendesk tickets.
-Your goal is to provide accurate information by using the available tools to search for and retrieve ticket information.
-"""
-
-    zendesk_agent = ZendeskAgentWithTools(system_prompt=system_prompt)
-    graph = zendesk_agent.get_agent()
-
-    for s in graph.stream(
-        {
-            "messages": [
-                (
-                    "user",
-                    "Can you give me the messages from the ticket 1234567890",
-                )
-            ]
-        },
-        {"recursion_limit": 100},
-    ):
-        print(s)
-        print("---")

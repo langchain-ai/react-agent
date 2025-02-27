@@ -1,34 +1,40 @@
 import asyncio  # Added import for asyncio
 import inspect
+import sqlite3
 from typing import Callable, List, Optional, Union
 
+from langchain.prompts import Prompt
 from langchain_core.language_models import LanguageModelLike
 from langchain_core.messages import HumanMessage
 from langchain_core.tools import BaseTool
 from langgraph.graph import START, StateGraph
 from langgraph.graph.state import CompiledStateGraph
-from langgraph.prebuilt.chat_agent_executor import (
-    AgentState,
-    Prompt,
-    StateSchemaType,
-    create_react_agent,
-)
-from langgraph.prebuilt.tool_executor import ToolExecutor
+from langgraph.prebuilt import create_react_agent, ToolNode
+from langgraph.prebuilt.chat_agent_executor import StateSchemaType, AgentState
 
-from tw_ai_agents.agents.base_agent import State
 from tw_ai_agents.agents.handoff import create_handoff_tool
+from tw_ai_agents.agents.message_types.base_message_type import State
 from tw_ai_agents.agents.supervisor_utils import (
     SUPERVISOR_PROMPT,
     OutputMode,
     _make_call_agent,
 )
 from tw_ai_agents.agents.utils import load_chat_model
-from tw_ai_agents.agents.zendesk_agent_tools import ZendeskAgentWithTools
+from tw_ai_agents.tools.crm_connector_tools.zendesk_agent_tools import (
+    ZendeskAgentWithTools,
+)
 from tw_ai_agents.tools.tools import (
     get_knowledge_info,
     set_ticket_info,
     set_ticket_shipping_address,
 )
+from langgraph.checkpoint.sqlite import SqliteSaver
+
+
+conn = sqlite3.connect("checkpoints.sqlite")
+memory = SqliteSaver(conn)
+
+# memory = MemorySaver()
 
 
 class TWSupervisor:
@@ -37,6 +43,7 @@ class TWSupervisor:
         agents: List[Union[CompiledStateGraph, "TWSupervisor"]],
         model: LanguageModelLike,
         description: str,
+        memory=None,
         tools: Optional[List[Union[Callable, BaseTool]]] = None,
         prompt: Optional[Prompt] = None,
         state_schema: StateSchemaType = AgentState,
@@ -50,7 +57,6 @@ class TWSupervisor:
             agents: List of agents or supervisors to manage
             model: Language model to use for the supervisor
             tools: Tools to use for the supervisor
-            state_schema: State schema to use for the supervisor graph.
             output_mode: Mode for adding managed agents' outputs to the message history in the multi-agent workflow.
                 Can be one of:
                 - `full_history`: add the entire agent message history
@@ -69,6 +75,7 @@ class TWSupervisor:
         self.supervisor_name = supervisor_name
         self.compiled_graph = None
         self.description = description
+        self.memory = memory
 
     def _process_agent(self, agent):
         """Process an agent which could be a CompiledStateGraph or another TWSupervisor."""
@@ -123,7 +130,7 @@ class TWSupervisor:
             )
 
         # Convert tools to the expected format if needed
-        tool_executor = ToolExecutor(all_tools) if all_tools else None
+        tool_executor = ToolNode(all_tools) if all_tools else None
 
         supervisor_agent = create_react_agent(
             name=self.supervisor_name,
@@ -150,118 +157,14 @@ class TWSupervisor:
 
         return builder
 
-    def get_supervisor_compiled_graph(self):
+    def get_supervisor_compiled_graph(self) -> CompiledStateGraph:
         if self.compiled_graph is None:
             self.compiled_graph = self.get_graph().compile(
-                debug=True, name=self.supervisor_name
+                debug=False,
+                name=self.supervisor_name,
+                checkpointer=self.memory,
             )
         return self.compiled_graph
 
-
-model_name: str = "openai/gpt-4o"
-
-# Create the supervisor model
-model = load_chat_model(model_name)
-
-# Define a specialized system prompt for Zendesk data setting
-system_prompt = """You are a specialized Zendesk data setting agent. 
-Your role is to update customer information, ticket status, and other relevant data 
-in Zendesk to help resolve customer inquiries. Always ensure you're setting the 
-most accurate information and following company policies for data updates. 
-Double-check all information before making changes to ensure accuracy.
-"""
-
-zst = ZendeskAgentWithTools()
-zendesk_getter_with_tools = TWSupervisor(
-    agents=[],
-    model=model,
-    tools=zst.get_tools(),
-    prompt=zst.system_prompt,
-    state_schema=State,
-    supervisor_name=zst.node_name,
-    description=zst.description,
-)
-zendesk_setter_with_tools = TWSupervisor(
-    agents=[],
-    model=model,
-    tools=[set_ticket_info, set_ticket_shipping_address],
-    prompt=zst.system_prompt,
-    state_schema=State,
-    supervisor_name="zendesk_info_setter",
-    description="Agent able to set information in Zendesk about tickets, address, etc.",
-)
-
-# Define prompt for account_address_update_case separately
-subagents = [zendesk_getter_with_tools, zendesk_setter_with_tools]
-account_address_update_prompt = "You are an agent able to call tools to read info from Zendesk tickets about addresses and update them with a Zendesk Ticket setter tool.\nYou can't solve the issue directly, but you can call specialized agents to help you."
-account_address_update_prompt += f"\nPossible tools are: \n"
-for subagent in subagents:
-    account_address_update_prompt += (
-        f" - {subagent.supervisor_name}: {subagent.description}\n"
-    )
-
-account_address_update_case = TWSupervisor(
-    agents=subagents,
-    model=model,
-    # tools=SUPERVISOR_TOOLS,
-    prompt=account_address_update_prompt,
-    state_schema=State,
-    supervisor_name="account_address_update_case",
-    description="Agent able to update address information in the Zendesk ticket.",
-)
-
-# Now, create a second supervisor that could potentially be called by the main supervisor
-knowledge_handler_system = TWSupervisor(
-    agents=[],
-    model=model,
-    tools=[get_knowledge_info],
-    prompt="You are an agent specialized in knowledge information lookup.",
-    state_schema=State,
-    supervisor_name="knowledge_handler",
-    description="Agent able to lookup knowledge information.",
-)
-
-# Create bidirectional relationship by passing each supervisor to the other
-# Note: We need to be careful about circular dependencies, so we'll use the
-# supervisors as they are, and they'll compile their graphs when needed
-supervisor_system = TWSupervisor(
-    agents=[
-        knowledge_handler_system,  # Pass the supervisor directly
-        account_address_update_case,  # Pass the supervisor directly
-    ],
-    model=model,
-    prompt=SUPERVISOR_PROMPT,
-    state_schema=State,
-    supervisor_name="tw_supervisor",
-    description="Agent able to handle the flow of the conversation.",
-)
-
-
-# Compile the supervisor system
-compiled_supervisor = supervisor_system.get_supervisor_compiled_graph()
-
-
-async def run_supervisor(state: State) -> State:
-    return await compiled_supervisor.ainvoke(state)
-
-
-if __name__ == "__main__":
-    messages = [
-        HumanMessage(
-            content="Hello, how are you?\nI'd like to change the shipping address for my ticket 14983 to Heinrichstrasse 237, Zurich, Switzerland. Please make sure to double check that this was actually done!"
-        ),
-    ]
-    # messages = [
-    #     {
-    #         "role": "user",
-    #         "content": "Hello, how are you?\nI'd like to change the shipping address for my ticket 14983 to Heinrichstrasse 237, Zurich, Switzerland.",
-    #     },
-    # ]
-    state = State(messages=messages)
-
-    async def main():
-        result = await run_supervisor(state)
-        print(result)
-
-    # Run the async function using asyncio
-    asyncio.run(main())
+    def get_pretty_description(self):
+        return f"{self.supervisor_name}: {self.description}"

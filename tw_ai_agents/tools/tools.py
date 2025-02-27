@@ -7,6 +7,7 @@ for category and flow retrieval from an external API.
 from typing import Any, Dict, List
 
 from langchain_core.tools import tool
+from langgraph.types import interrupt
 
 
 @tool("get_request_categories")
@@ -295,9 +296,23 @@ def get_knowledge_info(query: str) -> str:
     return "Knowledge info retrieved"
 
 
-# List of all tools available for the supervisor agent
-SUPERVISOR_TOOLS = [
-    get_request_categories,
-    get_category_flows,
-    get_flow_details,
-]
+@tool("real_human_agent_execute_actions")
+def real_human_agent_execute_actions(query: str) -> str:
+    """Make a real agent execute actions.
+
+    This tool makes a real human agent execute actions based on the provided query.
+
+    Args:
+        query: The query to make the real human agent execute.
+
+    Returns:
+        A string containing the information from the real human agent. It can be a confirmation or a negative answer.
+    """
+
+    answer = interrupt(
+        # This value will be sent to the client
+        # as part of the interrupt information.
+        query,
+    )
+    print(f"> Received an input from the interrupt: {answer}")
+    return {"human_value": answer}
