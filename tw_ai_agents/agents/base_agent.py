@@ -24,6 +24,8 @@ from typing_extensions import TypedDict
 
 class State(MessagesState):
     next: str
+    remaining_steps: int = 10
+
 
 class BaseAgent:
     @classmethod
@@ -55,28 +57,3 @@ class BaseAgent:
             )
 
         return node
-
-
-def make_supervisor_node(
-    llm: BaseChatModel, members: list[str], system_prompt: str
-):
-    options = ["FINISH"] + members
-
-    class Router(TypedDict):
-        """Worker to route to next. If no workers needed, route to FINISH."""
-
-        next: str  # Will be one of the options
-
-    def supervisor_node(state: State) -> Command[str]:
-        """An LLM-based router."""
-        messages = [
-            {"role": "system", "content": system_prompt},
-        ] + state["messages"]
-        response = llm.with_structured_output(Router).invoke(messages)
-        goto = response["next"]
-        if goto == "FINISH":
-            goto = END
-
-        return Command(goto=goto, update={"next": goto})
-
-    return supervisor_node
