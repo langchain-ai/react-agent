@@ -12,12 +12,17 @@ from tw_ai_agents.pydantic_models.agent_models import (
     AgentResponseRequest,
     AgentResponseModel,
 )
-
+from instruction_optimizer.instruction_optimizer import (
+    InstructionOptimizationRequest,
+    InstructionOptimizationResponse,
+    optimize_instruction,
+)
 
 load_dotenv()
 PORT = int(os.getenv("PORT", "8000"))
 
 app = FastAPI()
+
 
 @app.post(
     "/agent_response",
@@ -54,24 +59,24 @@ app = FastAPI()
 )
 async def process_agent_response(request: AgentResponseRequest) -> AgentResponseModel:
     """Process an agent or user message and generate a response.
-    
+
     Args:
         request: The AgentResponseRequest containing message details.
-        
+
     Returns:
         AgentResponseModel: The response with message details and metadata.
-        
+
     Raises:
         HTTPException: If there's an error processing the message.
     """
     try:
         # Create the initial state with message
         message = HumanMessage(content=request.message_text)
-        
+
         # Initialize a proper State object using dict notation
         initial_state: State = {
             "messages": [message],
-            "next": "tw_supervisor", 
+            "next": "tw_supervisor",
             "metadata": {"discussion_id": request.discussion_id},
             "remaining_steps": 10
         }
@@ -89,7 +94,7 @@ async def process_agent_response(request: AgentResponseRequest) -> AgentResponse
             metadata: Dict[str, Any] = {}
             if "metadata" in response and response["metadata"]:
                 metadata = response["metadata"]
-                    
+
             metadata["discussion_id"] = request.discussion_id
 
             return AgentResponseModel(
@@ -103,7 +108,8 @@ async def process_agent_response(request: AgentResponseRequest) -> AgentResponse
                 message_type="agent",
                 message_text="I'm sorry, I couldn't process your request at this time.",
                 message_id=str(uuid.uuid4()),
-                metadata={"status": "error", "discussion_id": request.discussion_id}
+                metadata={"status": "error",
+                          "discussion_id": request.discussion_id}
             )
 
     except Exception as e:
@@ -112,6 +118,15 @@ async def process_agent_response(request: AgentResponseRequest) -> AgentResponse
             detail=f"Error processing agent response: {str(e)}"
         )
 
+
+@app.post(
+    "/optimize_instruction",
+    response_model=InstructionOptimizationResponse,
+    description="Optimizes an instruction for AI models",
+)
+async def api_optimize_instruction(request: InstructionOptimizationRequest) -> InstructionOptimizationResponse:
+    """API endpoint to optimize an instruction for better AI responses."""
+    return await optimize_instruction(request)
 
 if __name__ == "__main__":
     # Run the server
