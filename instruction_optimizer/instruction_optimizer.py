@@ -94,8 +94,7 @@ INSTRUCTION TO OPTIMIZE: {sanitized_instruction}"""
             tools=tools,
             tool_choice={"type": "function", "function": {
                 "name": "optimize_instruction"}},
-            temperature=0.3,
-            max_tokens=1000
+            temperature=0.3
         )
 
         # Extract the function call result
