@@ -5,17 +5,23 @@ This module provides a server for the customer service supervisor agent API.
 
 import os
 import uuid
-from typing import Dict, Any
+from typing import Dict, Any, List
 import uvicorn
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from langchain_core.messages import HumanMessage
+from pydantic import BaseModel
 
 from tw_ai_agents.agents.tw_supervisor import run_supervisor
 from tw_ai_agents.agents.base_agent import State
 from tw_ai_agents.pydantic_models.agent_models import (
     AgentResponseRequest,
     AgentResponseModel,
+)
+from tw_ai_agents.instruction_optimizer import (
+    InstructionOptimizationRequest,
+    InstructionOptimizationResponse,
+    optimize_instruction,
 )
 
 
@@ -26,6 +32,7 @@ load_dotenv()
 PORT = int(os.getenv("PORT", "8000"))
 
 app = FastAPI()
+
 
 @app.post(
     "/agent_response",
@@ -62,13 +69,13 @@ app = FastAPI()
 )
 async def process_agent_response(request: AgentResponseRequest) -> AgentResponseModel:
     """Process an agent or user message and generate a response.
-    
+
     Args:
         request: The AgentResponseRequest containing message details.
-        
+
     Returns:
         AgentResponseModel: The response with message details and metadata.
-        
+
     Raises:
         HTTPException: If there's an error processing the message.
     """
@@ -103,7 +110,8 @@ async def process_agent_response(request: AgentResponseRequest) -> AgentResponse
                 message_type="agent",
                 message_text="I'm sorry, I couldn't process your request at this time.",
                 message_id=str(uuid.uuid4()),
-                metadata={"status": "error", "discussion_id": request.discussion_id}
+                metadata={"status": "error",
+                          "discussion_id": request.discussion_id}
             )
 
     except Exception as e:
@@ -111,6 +119,16 @@ async def process_agent_response(request: AgentResponseRequest) -> AgentResponse
             status_code=500,
             detail=f"Error processing agent response: {str(e)}"
         )
+
+
+@app.post(
+    "/optimize_instruction",
+    response_model=InstructionOptimizationResponse,
+    description="Optimizes an instruction for AI models",
+)
+async def api_optimize_instruction(request: InstructionOptimizationRequest) -> InstructionOptimizationResponse:
+    """API endpoint to optimize an instruction for better AI responses."""
+    return await optimize_instruction(request)
 
 
 if __name__ == "__main__":
