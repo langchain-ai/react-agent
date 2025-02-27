@@ -1,3 +1,4 @@
+import asyncio  # Added import for asyncio
 import inspect
 from typing import Callable, List, Optional, Union
 
@@ -15,16 +16,14 @@ from langgraph.prebuilt.chat_agent_executor import (
 from langgraph.prebuilt.tool_executor import ToolExecutor
 
 from tw_ai_agents.agents.base_agent import State
+from tw_ai_agents.agents.handoff import create_handoff_tool
 from tw_ai_agents.agents.supervisor_utils import (
     SUPERVISOR_PROMPT,
     OutputMode,
     _make_call_agent,
 )
-from tw_ai_agents.agents.zendesk_agent_tools import ZendeskAgentWithTools
 from tw_ai_agents.agents.utils import load_chat_model
-from tw_ai_agents.agents.handoff import (
-    create_handoff_tool,
-)
+from tw_ai_agents.agents.zendesk_agent_tools import ZendeskAgentWithTools
 from tw_ai_agents.tools.tools import (
     get_knowledge_info,
     set_ticket_info,
@@ -242,6 +241,10 @@ supervisor_system = TWSupervisor(
 compiled_supervisor = supervisor_system.get_supervisor_compiled_graph()
 
 
+async def run_supervisor(state: State) -> State:
+    return await compiled_supervisor.ainvoke(state)
+
+
 if __name__ == "__main__":
     messages = [
         HumanMessage(
@@ -255,5 +258,10 @@ if __name__ == "__main__":
     #     },
     # ]
     state = State(messages=messages)
-    result = compiled_supervisor.invoke(state)
-    print(result)
+
+    async def main():
+        result = await run_supervisor(state)
+        print(result)
+
+    # Run the async function using asyncio
+    asyncio.run(main())
