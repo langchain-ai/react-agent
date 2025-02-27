@@ -1,3 +1,5 @@
+from typing import Optional
+
 from langchain_core.tools import tool
 from langchain_openai import ChatOpenAI
 from langgraph.prebuilt import create_react_agent
@@ -8,10 +10,13 @@ llm = ChatOpenAI(model="gpt-4o")
 
 
 class ZendeskAgentWithTools(BaseAgent):
-    def __init__(self, system_prompt: str, *args, **kwargs):
+    def __init__(self, system_prompt: Optional[str] = None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.node_name = "ZendeskSearcher"
-        self.system_prompt = system_prompt
+        base_system_prompt = """You are a helpful assistant that can use tools to answer questions about Zendesk tickets.
+        Your goal is to provide accurate information by using the available tools to search for and retrieve ticket information.
+        """
+        self.system_prompt = system_prompt or base_system_prompt
 
     @tool
     @staticmethod
@@ -35,14 +40,16 @@ class ZendeskAgentWithTools(BaseAgent):
         """
         return f"This is are the comments from the ticket {ticket_id}: [comment1, comment2, comment3]"
 
-    def get_graph(self):
+    def get_tools(self):
+        return [self.get_comments, self.get_ticket_info]
+
+    def get_agent(self):
 
         tool_list = [self.get_comments, self.get_ticket_info]
         agent = create_react_agent(
-            llm, tools=tool_list, prompt=self.system_prompt
+            llm, tools=tool_list, prompt=self.system_prompt, name=self.node_name
         )
         return agent
-
 
 
 if __name__ == "__main__":
@@ -52,7 +59,7 @@ Your goal is to provide accurate information by using the available tools to sea
 """
 
     zendesk_agent = ZendeskAgentWithTools(system_prompt=system_prompt)
-    graph = zendesk_agent.get_graph()
+    graph = zendesk_agent.get_agent()
 
     for s in graph.stream(
         {

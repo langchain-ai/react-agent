@@ -9,7 +9,7 @@ from tw_ai_agents.agents.base_agent import State
 llm = ChatOpenAI(model="gpt-4o")
 
 
-class ZendeskAgentWithTools(BaseAgent):
+class ZendeskAgentWithToolsWRONG(BaseAgent):
     def __init__(self, system_prompt: str, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.node_name = "ZendeskSearcher"

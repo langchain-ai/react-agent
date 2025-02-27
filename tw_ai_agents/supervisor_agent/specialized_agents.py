@@ -9,6 +9,7 @@ from typing import Any
 from langgraph.prebuilt.chat_agent_executor import create_react_agent
 
 from tw_ai_agents.agents.base_agent import State
+from tw_ai_agents.agents.zendesk_agent_tools import ZendeskAgentWithTools
 from tw_ai_agents.react_agent.utils import load_chat_model
 
 
@@ -60,9 +61,9 @@ def create_zendesk_retrieval_agent(
         A compiled agent graph for Zendesk data retrieval.
     """
     model = load_chat_model(model_name)
-
+    zendesk_agent = ZendeskAgentWithTools().get_agent()
     # Define Zendesk retrieval tools here
-    tools = []
+    tools = [zendesk_agent]
 
     # Define a specialized system prompt for Zendesk data retrieval
     system_prompt = """You are a specialized Zendesk data retrieval agent. 

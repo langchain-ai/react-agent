@@ -20,6 +20,7 @@ from tw_ai_agents.agents.supervisor_utils import (
     OutputMode,
     _make_call_agent,
 )
+from tw_ai_agents.agents.zendesk_agent_tools import ZendeskAgentWithTools
 from tw_ai_agents.react_agent.utils import load_chat_model
 from tw_ai_agents.supervisor_agent.handoff import (
     create_handoff_back_messages,
@@ -30,12 +31,16 @@ from tw_ai_agents.supervisor_agent.specialized_agents import (
     create_zendesk_retrieval_agent,
     create_zendesk_setter_agent,
 )
+from tw_ai_agents.supervisor_agent.tools import (
+    SUPERVISOR_TOOLS,
+    set_ticket_info,
+)
 
 
 class TWSupervisor:
     def __init__(
         self,
-        agents: List[CompiledStateGraph],
+        agents: List[Union[CompiledStateGraph, "TWSupervisor"]],
         model: LanguageModelLike,
         tools: Optional[List[Union[Callable, BaseTool]]] = None,
         prompt: Optional[Prompt] = None,
@@ -47,7 +52,7 @@ class TWSupervisor:
         """
 
         Args:
-            agents: List of agents to manage
+            agents: List of agents or supervisors to manage
             model: Language model to use for the supervisor
             tools: Tools to use for the supervisor
             state_schema: State schema to use for the supervisor graph.
@@ -62,13 +67,20 @@ class TWSupervisor:
         self.agents = agents
         self.model = model
         self.tools = tools
-        self.prompt = SUPERVISOR_PROMPT
+        self.prompt = prompt
         self.state_schema = state_schema
         self.output_mode = output_mode
         self.add_handoff_back_messages = add_handoff_back_messages
         self.supervisor_name = supervisor_name
+        self.compiled_graph = None
 
-    def _create_supervisor(
+    def _process_agent(self, agent):
+        """Process an agent which could be a CompiledStateGraph or another TWSupervisor."""
+        if isinstance(agent, TWSupervisor):
+            return agent.get_supervisor_compiled_graph()
+        return agent
+
+    def get_graph(
         self,
     ) -> StateGraph:
         """Create a multi-agent supervisor.
@@ -76,8 +88,10 @@ class TWSupervisor:
         Returns:
             A StateGraph representing the supervisor agent system.
         """
+        processed_agents = [self._process_agent(agent) for agent in self.agents]
+
         agent_names = set()
-        for agent in self.agents:
+        for agent in processed_agents:
             if agent.name is None or agent.name == "LangGraph":
                 raise ValueError(
                     "Please specify a name when you create your agent, either via `create_react_agent(..., name=agent_name)` "
@@ -92,7 +106,11 @@ class TWSupervisor:
             agent_names.add(agent.name)
 
         handoff_tools = [
-            create_handoff_tool(agent_name=agent.name) for agent in self.agents
+            create_handoff_tool(
+                agent_name=agent.name,
+                # agent_description=agent.prompt
+            )
+            for agent in processed_agents
         ]
         all_tools = (self.tools or []) + handoff_tools
         # all_tools = handoff_tools
@@ -119,7 +137,7 @@ class TWSupervisor:
         builder = StateGraph(self.state_schema)
         builder.add_node(supervisor_agent, destinations=tuple(agent_names))
         builder.add_edge(START, supervisor_agent.name)
-        for agent in self.agents:
+        for agent in processed_agents:
             builder.add_node(
                 agent.name,
                 _make_call_agent(
@@ -134,33 +152,108 @@ class TWSupervisor:
         return builder
 
     def get_supervisor_compiled_graph(self):
-        return self._create_supervisor().compile(debug=True)
+        if self.compiled_graph is None:
+            self.compiled_graph = self.get_graph().compile(
+                debug=True, name=self.supervisor_name
+            )
+        return self.compiled_graph
 
 
 model_name: str = "openai/gpt-4o"
 knowledge_agent = create_knowledge_lookup_agent(model_name)
-zendesk_retrieval_agent = create_zendesk_retrieval_agent(model_name)
+# zendesk_retrieval_agent = create_zendesk_retrieval_agent(model_name)
 zendesk_setter_agent = create_zendesk_setter_agent(model_name)
 
 # Create the supervisor model
 model = load_chat_model(model_name)
-supervisor_system = TWSupervisor(
-    agents=[knowledge_agent, zendesk_retrieval_agent, zendesk_setter_agent],
+# Define Zendesk setter tools here
+
+# Define a specialized system prompt for Zendesk data setting
+system_prompt = """You are a specialized Zendesk data setting agent. 
+Your role is to update customer information, ticket status, and other relevant data 
+in Zendesk to help resolve customer inquiries. Always ensure you're setting the 
+most accurate information and following company policies for data updates. 
+Double-check all information before making changes to ensure accuracy.
+"""
+
+# Create and return the agent
+# zendesk_handler_system = create_react_agent(
+#     name="zendesk_handler",
+#     model=model,
+#     tools=[ZendeskAgentWithTools().get_agent(), zendesk_setter_agent],
+#     prompt="You are an agent able to handle Zendesk ticket. You can get information about tickets and comments or set some specific fields.",
+#     state_schema=State,
+# )
+zst = ZendeskAgentWithTools()
+zendesk_getter_with_tools = TWSupervisor(
+    agents=[],
+    model=model,
+    tools=zst.get_tools(),
+    prompt=zst.system_prompt,
+    state_schema=State,
+    supervisor_name=zst.node_name,
+)
+zendesk_setter_with_tools = TWSupervisor(
+    agents=[],
+    model=model,
+    tools=[set_ticket_info],
+    prompt=zst.system_prompt,
+    state_schema=State,
+    supervisor_name=zst.node_name,
+)
+
+account_address_update_case = TWSupervisor(
+    agents=[
+        zendesk_getter_with_tools.get_graph(),
+        zendesk_setter_with_tools.get_graph(),
+    ],
     model=model,
     # tools=SUPERVISOR_TOOLS,
+    prompt="You are an agent able to update address information in the Zendesk ticket.",
+    state_schema=State,
+    supervisor_name="account_address_update_case",
+)
+
+# Now, create a second supervisor that could potentially be called by the main supervisor
+knowledge_handler_system = TWSupervisor(
+    agents=[knowledge_agent],
+    model=model,
+    prompt="You are an agent specialized in knowledge information lookup.",
+    state_schema=State,
+    supervisor_name="knowledge_handler",
+)
+
+# Create bidirectional relationship by passing each supervisor to the other
+# Note: We need to be careful about circular dependencies, so we'll use the
+# supervisors as they are, and they'll compile their graphs when needed
+supervisor_system = TWSupervisor(
+    agents=[
+        knowledge_handler_system.get_graph(),  # Pass the supervisor directly
+        account_address_update_case.get_graph(),  # Pass the supervisor directly
+    ],
+    model=model,
+    prompt=SUPERVISOR_PROMPT,
     state_schema=State,
     supervisor_name="tw_supervisor",
 )
+# supervisor_system = create_react_agent(
+#     name="tw_supervisor",
+#     model=model,
+#     tools=[knowledge_agent, zendesk_handler_system],
+#     prompt=SUPERVISOR_PROMPT,
+#     state_schema=State,
+# )
 
-# Compile the supervisor system before wrapping it
-# checkpointer = InMemorySaver()
-# store = InMemoryStore()
+# Compile the supervisor system
 compiled_supervisor = supervisor_system.get_supervisor_compiled_graph()
 
 
 if __name__ == "__main__":
     messages = [
-        {"role": "user", "content": "Hello, how are you?"},
+        {
+            "role": "user",
+            "content": "Hello, how are you?\nI'd like to know which are the comments for the ticket ID 25432432.",
+        },
     ]
     state = State(messages=messages)
     result = compiled_supervisor.invoke(state)
