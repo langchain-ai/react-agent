@@ -168,13 +168,9 @@ class TWSupervisor:
 
 
 model_name: str = "openai/gpt-4o"
-knowledge_agent = create_knowledge_lookup_agent(model_name)
-# zendesk_retrieval_agent = create_zendesk_retrieval_agent(model_name)
-zendesk_setter_agent = create_zendesk_setter_agent(model_name)
 
 # Create the supervisor model
 model = load_chat_model(model_name)
-# Define Zendesk setter tools here
 
 # Define a specialized system prompt for Zendesk data setting
 system_prompt = """You are a specialized Zendesk data setting agent. 
@@ -184,14 +180,6 @@ most accurate information and following company policies for data updates.
 Double-check all information before making changes to ensure accuracy.
 """
 
-# Create and return the agent
-# zendesk_handler_system = create_react_agent(
-#     name="zendesk_handler",
-#     model=model,
-#     tools=[ZendeskAgentWithTools().get_agent(), zendesk_setter_agent],
-#     prompt="You are an agent able to handle Zendesk ticket. You can get information about tickets and comments or set some specific fields.",
-#     state_schema=State,
-# )
 zst = ZendeskAgentWithTools()
 zendesk_getter_with_tools = TWSupervisor(
     agents=[],
@@ -256,13 +244,7 @@ supervisor_system = TWSupervisor(
     supervisor_name="tw_supervisor",
     description="Agent able to handle the flow of the conversation.",
 )
-# supervisor_system = create_react_agent(
-#     name="tw_supervisor",
-#     model=model,
-#     tools=[knowledge_agent, zendesk_handler_system],
-#     prompt=SUPERVISOR_PROMPT,
-#     state_schema=State,
-# )
+
 
 # Compile the supervisor system
 compiled_supervisor = supervisor_system.get_supervisor_compiled_graph()
