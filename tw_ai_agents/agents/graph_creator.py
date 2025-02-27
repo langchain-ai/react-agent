@@ -44,6 +44,7 @@ def get_complete_graph(model, configs: dict, memory) -> TWSupervisor:
             memory=memory,
         )
     ]
+    # shared_tools = [real_human_agent_execute_actions]
     shared_tools = [real_human_agent_execute_actions]
 
     for config in configs["caseCategories"]:
@@ -91,17 +92,18 @@ def get_complete_graph(model, configs: dict, memory) -> TWSupervisor:
 def get_input_configs() -> Dict[str, Any]:
     """
     Fetch configuration data from the API endpoint.
-    
+
     Returns:
         Dict[str, Any]: The configuration data including company info, channels, and case categories.
-        
+
     Raises:
         Exception: If there's an error fetching or processing the configuration data.
     """
-    response = requests.get("https://gqyrvmzupb.eu-central-1.awsapprunner.com/api/config/all")
+    response = requests.get(
+        "https://gqyrvmzupb.eu-central-1.awsapprunner.com/api/config/all"
+    )
     response.raise_for_status()  # Raise an exception for HTTP errors
     return response.json()
-
 
 
 if __name__ == "__main__":
@@ -114,7 +116,7 @@ if __name__ == "__main__":
             # content="Hello, how are you?\nI'd like to cancel the order I just did!"
             # content="My order number is 423423, and my email f.roberts@gmail.com."
             # content="It is because the desk arrived completly broken. I want to return it."
-            content="Hello, how are you?\nI'd like to cancel the order I just did!\n\nMy order number is 423423, and my email f.roberts@gmail.com. I want to return it because the desk arrived completly broken."
+            content="Hello, how are you?\nI'd like to change the shipping address for my ticket 14983 to Heinrichstrasse 237, Zurich, Switzerland. Please make sure to double check that this was actually done!"
         ),
     ]
 
@@ -134,12 +136,12 @@ if __name__ == "__main__":
                 config=config,
             )
 
-            result_2 = await compiled_supervisor.ainvoke(
-                input=Command(
-                    resume="Stop. We can't accept the return. We are not doing return for this things."
-                ),
-                config=config,
-            )
+            # result_2 = await compiled_supervisor.ainvoke(
+            #     input=Command(
+            #         resume="Stop. We can't accept the return. We are not doing return for this things."
+            #     ),
+            #     config=config,
+            # )
 
             a = 1
 

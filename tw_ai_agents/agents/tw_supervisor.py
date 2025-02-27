@@ -1,6 +1,6 @@
 import asyncio  # Added import for asyncio
 import inspect
-from typing import Callable, List, Optional, Union
+from typing import Callable, List, Optional, Union, Dict
 import sqlite3
 from typing import Callable, List, Optional, Union
 
@@ -158,3 +158,53 @@ class TWSupervisor:
 
     def get_pretty_description(self):
         return f"{self.supervisor_name}: {self.description}"
+
+
+async def run_supervisor(state: State, graph, config) -> Dict:
+    """Run the supervisor agent system with metadata tracking.
+
+    This function executes the supervisor graph and tracks metadata like tool usage
+    throughout the execution.
+
+    Args:
+        state: The initial state containing messages and other context
+
+    Returns:
+        The updated state with results and metadata about the execution
+    """
+    # try:
+    result = await graph.ainvoke(state, config=config)
+
+    if "metadata" not in result:
+        result["metadata"] = {}
+
+    tool_calls = []
+    for message in result["messages"]:
+        # Check if this is a tool-related message
+        if hasattr(message, "additional_kwargs") and message.additional_kwargs:
+            # Extract tool calls from OpenAI format
+            if "tool_calls" in message.additional_kwargs:
+                for tool_call in message.additional_kwargs["tool_calls"]:
+                    tool_calls.append(
+                        {
+                            "tool_name": tool_call.get("function", {}).get(
+                                "name", "unknown"
+                            ),
+                            "tool_input": tool_call.get("function", {}).get(
+                                "arguments", "{}"
+                            ),
+                            "tool_id": tool_call.get("id", "unknown"),
+                        }
+                    )
+
+    result["metadata"]["tool_calls"] = tool_calls
+
+    return result
+
+    # except Exception as e:
+    #     # If there's an error, return a valid state with error information
+    #     return {
+    #         "messages": state.get("messages", []),
+    #         "next": "FINISH",
+    #         "metadata": {"error": str(e), "status": "error"},
+    #     }
