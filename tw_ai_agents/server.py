@@ -7,7 +7,7 @@ from fastapi import FastAPI, HTTPException
 from langchain_core.messages import HumanMessage, BaseMessage
 
 from tw_ai_agents.agents.tw_supervisor import run_supervisor
-from tw_ai_agents.agents.base_agent import State
+from tw_ai_agents.agents.message_types.base_message_type import State
 from tw_ai_agents.pydantic_models.agent_models import (
     AgentResponseRequest,
     AgentResponseModel,

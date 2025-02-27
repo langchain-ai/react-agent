@@ -1,12 +1,11 @@
 import asyncio  # Added import for asyncio
 import inspect
-from typing import Callable, List, Optional, Union, Dict
+from typing import Callable, List, Optional, Union
 import sqlite3
 from typing import Callable, List, Optional, Union
 
 from langchain.prompts import Prompt
 from langchain_core.language_models import LanguageModelLike
-from langchain_core.messages import HumanMessage
 from langchain_core.tools import BaseTool
 from langgraph.graph import START, StateGraph
 from langgraph.graph.state import CompiledStateGraph
@@ -16,18 +15,8 @@ from langgraph.prebuilt.chat_agent_executor import StateSchemaType, AgentState
 from tw_ai_agents.agents.handoff import create_handoff_tool
 from tw_ai_agents.agents.message_types.base_message_type import State
 from tw_ai_agents.agents.supervisor_utils import (
-    SUPERVISOR_PROMPT,
     OutputMode,
     _make_call_agent,
-)
-from tw_ai_agents.agents.utils import load_chat_model
-from tw_ai_agents.tools.crm_connector_tools.zendesk_agent_tools import (
-    ZendeskAgentWithTools,
-)
-from tw_ai_agents.tools.tools import (
-    get_knowledge_info,
-    set_ticket_info,
-    set_ticket_shipping_address,
 )
 from langgraph.checkpoint.sqlite import SqliteSaver
 
