@@ -41,8 +41,23 @@ class ZendeskAgentWithTools(BaseAgent):
         """
         return f"This is are the comments from the ticket {ticket_id}: [comment1, comment2, comment3]"
 
+    @tool
+    @staticmethod
+    def get_ticket_address(ticket_id: str):
+        """
+        Tool to get the comments from a zendesk ticket
+        :params:
+            ticket_id: The ID of the ticket to get comments for
+        :return: The comments from the ticket
+        """
+        return f"Ticket address for ticket_id {ticket_id} is Heinrichstrasse 267, 8005 Zurich, Switzerland"
+
     def get_tools(self):
-        return [self.get_comments, self.get_ticket_info]
+        return [
+            self.get_comments,
+            self.get_ticket_info,
+            self.get_ticket_address,
+        ]
 
     def get_agent(self):
 

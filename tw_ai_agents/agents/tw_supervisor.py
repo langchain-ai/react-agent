@@ -281,7 +281,9 @@ with open("account_address_update_case.png", "wb") as f:
 
 if __name__ == "__main__":
     messages = [
-        HumanMessage(content="Hello, how are you?\nI'd like to change the shipping address for my ticket 14983 to Heinrichstrasse 237, Zurich, Switzerland."),
+        HumanMessage(
+            content="Hello, how are you?\nI'd like to change the shipping address for my ticket 14983 to Heinrichstrasse 237, Zurich, Switzerland. Please make sure to double check that this was actually done!"
+        ),
     ]
     # messages = [
     #     {
