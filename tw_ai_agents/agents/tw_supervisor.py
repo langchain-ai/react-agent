@@ -2,6 +2,7 @@ import inspect
 from typing import Callable, Dict, List, Literal, Optional, Union
 
 from langchain_core.language_models import LanguageModelLike
+from langchain_core.messages import HumanMessage
 from langchain_core.tools import BaseTool
 from langgraph.graph import START, StateGraph
 from langgraph.graph.state import CompiledStateGraph
@@ -207,7 +208,7 @@ zendesk_setter_with_tools = TWSupervisor(
     tools=[set_ticket_info, set_ticket_shipping_address],
     prompt=zst.system_prompt,
     state_schema=State,
-    supervisor_name="Zendesk Ticket Info Setter",
+    supervisor_name="zendesk_info_setter",
     description="Agent able to set information in Zendesk about tickets, address, etc.",
 )
 
@@ -280,11 +281,14 @@ with open("account_address_update_case.png", "wb") as f:
 
 if __name__ == "__main__":
     messages = [
-        {
-            "role": "user",
-            "content": "Hello, how are you?\nI'd like to change the shipping address for my ticket 14983 to Heinrichstrasse 237, Zurich, Switzerland.",
-        },
+        HumanMessage(content="Hello, how are you?\nI'd like to change the shipping address for my ticket 14983 to Heinrichstrasse 237, Zurich, Switzerland."),
     ]
+    # messages = [
+    #     {
+    #         "role": "user",
+    #         "content": "Hello, how are you?\nI'd like to change the shipping address for my ticket 14983 to Heinrichstrasse 237, Zurich, Switzerland.",
+    #     },
+    # ]
     state = State(messages=messages)
     result = compiled_supervisor.invoke(state)
     print(result)
