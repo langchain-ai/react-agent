@@ -56,6 +56,7 @@ def get_complete_graph(
 
     for config in configs["caseCategories"]:
         description = config["description"]
+        name = _normalize_agent_name(config["name"])
         instructions_with_tools = config["instructions"]
         instructions = instructions_with_tools["text"]
         action_list = instructions_with_tools["actions"]
@@ -70,12 +71,11 @@ def get_complete_graph(
                     tools=new_agent.get_tools(),
                     prompt=new_agent.system_prompt,
                     state_schema=State,
-                    supervisor_name=new_agent.node_name,
+                    supervisor_name=f"{name}_{new_agent.node_name}",
                     description=new_agent.description,
                 )
             )
 
-        name = _normalize_agent_name(config["name"])
         handoff_conditions = config["handoffConditions"]["text"]
         agent_prompt = hub.pull("case_agent_initial_prompt").format(
             instructions=instructions, handoff_conditions=handoff_conditions
