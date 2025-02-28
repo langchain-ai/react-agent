@@ -132,7 +132,7 @@ def get_complete_graph(
         supervisor_name="tw_supervisor",
         description="Agent able to handle the flow of the conversation.",
         memory=memory,
-        tools=shared_tools,
+        tools=[],
     )
 
     return supervisor_system
