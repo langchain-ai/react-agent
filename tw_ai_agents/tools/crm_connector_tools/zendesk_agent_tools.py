@@ -24,7 +24,6 @@ class ZendeskAgentWithTools(BaseAgentWithTools):
             node_name=node_name,
             description=description,
         )
-        self.state_database = copy.deepcopy(self.BASE_DATABASE)
 
     @tool
     @staticmethod
