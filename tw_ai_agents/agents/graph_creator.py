@@ -17,6 +17,7 @@ from tw_ai_agents.agents.handoff import _normalize_agent_name
 from tw_ai_agents.agents.message_types.base_message_type import State
 from tw_ai_agents.agents.tw_supervisor import TWSupervisor
 from tw_ai_agents.agents.utils import load_chat_model
+from tw_ai_agents.tools.actions_retriever import AgentListElement, AGENT_LIST
 from tw_ai_agents.tools.tools import (
     get_knowledge_info,
     real_human_agent_execute_actions,
@@ -49,13 +50,17 @@ def get_complete_graph(model, configs: dict, memory) -> TWSupervisor:
 
     for config in configs["caseCategories"]:
         description = config["description"]
-        instructions = config["instructions"]
+        instructions_with_tools = config["instructions"]
+        instructions = instructions_with_tools["text"]
+        tools = instructions_with_tools["actions"]
+        tool_list = [AGENT_LIST[action["id"]] for action in tools]
+
         name = _normalize_agent_name(config["name"])
         handoff_conditions = config["handoffConditions"]
         subagents_list.append(
             TWSupervisor(
                 agents=[] + shared_agents,
-                tools=shared_tools,
+                tools=shared_tools + tool_list,
                 model=model,
                 prompt=instructions,
                 state_schema=State,

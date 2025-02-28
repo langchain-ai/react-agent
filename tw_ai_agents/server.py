@@ -98,13 +98,13 @@ def process_agent_response(
             "remaining_steps": 10,
         }
 
+        input_configs = get_input_configs()
+
         async def run_supervisor_with_graph():
             async with AsyncSqliteSaver.from_conn_string(
                 "checkpoints.sqlite"
             ) as saver:
-                graph = get_complete_graph(
-                    model, get_input_configs(), memory=saver
-                )
+                graph = get_complete_graph(model, input_configs, memory=saver)
                 # Your code here
                 compiled_supervisor = graph.get_supervisor_compiled_graph()
                 config = {"configurable": {"thread_id": request.discussion_id}}
