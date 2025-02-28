@@ -14,7 +14,7 @@ from tw_ai_agents.agents.graph_creator import (
     get_complete_graph,
     get_input_configs,
 )
-from tw_ai_agents.agents.tw_supervisor import run_supervisor, run_supervisor_s
+from tw_ai_agents.agents.tw_supervisor import run_supervisor
 from tw_ai_agents.agents.message_types.base_message_type import State
 from tw_ai_agents.agents.utils import load_chat_model
 from tw_ai_agents.config.constants import DB_CHECKPOINT_PATH
