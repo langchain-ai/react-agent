@@ -19,8 +19,6 @@ from tw_ai_agents.agents.supervisor_utils import OutputMode, _make_call_agent
 conn = sqlite3.connect("checkpoints.sqlite")
 memory = SqliteSaver(conn)
 
-# memory = MemorySaver()
-
 
 class TWSupervisor:
     def __init__(
