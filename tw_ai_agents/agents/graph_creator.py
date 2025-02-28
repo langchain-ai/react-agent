@@ -18,6 +18,9 @@ from tw_ai_agents.agents.message_types.base_message_type import State
 from tw_ai_agents.agents.tw_supervisor import TWSupervisor
 from tw_ai_agents.agents.utils import load_chat_model
 from tw_ai_agents.tools.actions_retriever import AgentListElement, AGENT_LIST
+from tw_ai_agents.tools.crm_connector_tools.zendesk_agent_tools import (
+    ZendeskAgentWithTools,
+)
 from tw_ai_agents.tools.tools import (
     get_knowledge_info,
     real_human_agent_execute_actions,
@@ -32,6 +35,16 @@ def get_complete_graph(model, configs: dict, memory) -> TWSupervisor:
 
     supervisor_tools = []
     subagents_list = []
+    zst = ZendeskAgentWithTools()
+    zendesk_getter_with_tools = TWSupervisor(
+        agents=[],
+        model=model,
+        tools=zst.get_tools(),
+        prompt=zst.system_prompt,
+        state_schema=State,
+        supervisor_name=zst.node_name,
+        description=zst.description,
+    )
     shared_agents = [
         # Now, create a second supervisor that could potentially be called by the main supervisor
         TWSupervisor(
@@ -43,7 +56,8 @@ def get_complete_graph(model, configs: dict, memory) -> TWSupervisor:
             supervisor_name="knowledge_handler",
             description="Agent able to lookup knowledge information.",
             memory=memory,
-        )
+        ),
+        zendesk_getter_with_tools,
     ]
     # shared_tools = [real_human_agent_execute_actions]
     shared_tools = [real_human_agent_execute_actions]
@@ -53,14 +67,28 @@ def get_complete_graph(model, configs: dict, memory) -> TWSupervisor:
         instructions_with_tools = config["instructions"]
         instructions = instructions_with_tools["text"]
         tools = instructions_with_tools["actions"]
-        tool_list = [AGENT_LIST[action["id"]] for action in tools]
+        agent_list = [AGENT_LIST[action["id"]] for action in tools]
+        agent_list_as_tools = []
+        for agent in agent_list:
+            new_agent = agent()
+            agent_list_as_tools.append(
+                TWSupervisor(
+                    agents=[],
+                    model=model,
+                    tools=new_agent.get_tools(),
+                    prompt=new_agent.system_prompt,
+                    state_schema=State,
+                    supervisor_name=new_agent.node_name,
+                    description=new_agent.description,
+                )
+            )
 
         name = _normalize_agent_name(config["name"])
         handoff_conditions = config["handoffConditions"]
         subagents_list.append(
             TWSupervisor(
-                agents=[] + shared_agents,
-                tools=shared_tools + tool_list,
+                agents=agent_list_as_tools + shared_agents,
+                tools=shared_tools,
                 model=model,
                 prompt=instructions,
                 state_schema=State,
