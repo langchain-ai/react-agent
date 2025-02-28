@@ -1,64 +1,51 @@
 import sqlite3
 import os
-from sample_tickets import SAMPLE_TICKETS, SAMPLE_COMMENTS, SAMPLE_ADDRESSES
+from mock.sample_data import SAMPLE_ORDERS, SAMPLE_CUSTOMERS
 
-# Create the database directory if it doesn't exist
 os.makedirs('mock/data', exist_ok=True)
 
-# Connect to the SQLite database (will create it if it doesn't exist)
-conn = sqlite3.connect('mock/data/tickets.db')
-
+conn = sqlite3.connect('mock/data/erp_info.db')
 cursor = conn.cursor()
 
-# Drop existing tables
-cursor.execute('DROP TABLE IF EXISTS tickets')
-cursor.execute('DROP TABLE IF EXISTS comments')
-cursor.execute('DROP TABLE IF EXISTS addresses')
+cursor.execute('DROP TABLE IF EXISTS orders')
+cursor.execute('DROP TABLE IF EXISTS customers')
 
-# Create tickets table
+# Create customers table for ERP info (email, address, document_id)
 cursor.execute('''
-CREATE TABLE IF NOT EXISTS tickets (
-    ticketId TEXT PRIMARY KEY,
-    ticketContents TEXT
-)
-''')
-
-# Create comments table
-cursor.execute('''
-CREATE TABLE IF NOT EXISTS comments (
-    commentId INTEGER PRIMARY KEY AUTOINCREMENT,
-    ticketId TEXT,
-    commentText TEXT,
-    FOREIGN KEY (ticketId) REFERENCES tickets (ticketId)
-)
-''')
-
-# Create addresses table
-cursor.execute('''
-CREATE TABLE IF NOT EXISTS addresses (
-    addressId INTEGER PRIMARY KEY AUTOINCREMENT,
-    ticketId TEXT UNIQUE,
+CREATE TABLE IF NOT EXISTS customers (
+    email_id TEXT PRIMARY KEY,
     address TEXT,
-    FOREIGN KEY (ticketId) REFERENCES tickets (ticketId)
+    document_id TEXT
 )
 ''')
 
-# Insert sample tickets
-cursor.executemany(
-    'INSERT OR REPLACE INTO tickets (ticketId, ticketContents) VALUES (?, ?)', SAMPLE_TICKETS)
+# Create orders table with a foreign key to customers
+cursor.execute('''
+CREATE TABLE IF NOT EXISTS orders (
+    order_id TEXT PRIMARY KEY,
+    order_contents TEXT,
+    status TEXT,
+    price REAL,
+    customer_email TEXT,
+    FOREIGN KEY (customer_email) REFERENCES customers (email_id)
+)
+''')
 
-# Insert sample comments
-for ticket_id, comment_text in SAMPLE_COMMENTS:
+# Insert customer data
+for customer in SAMPLE_CUSTOMERS:
     cursor.execute(
-        'INSERT INTO comments (ticketId, commentText) VALUES (?, ?)',
-        (ticket_id, comment_text)
+        "INSERT INTO customers (email_id, address, document_id) VALUES (?, ?, ?)",
+        customer
     )
 
-# Insert sample addresses
-cursor.executemany(
-    'INSERT OR REPLACE INTO addresses (ticketId, address) VALUES (?, ?)', SAMPLE_ADDRESSES)
+# Insert order data
+for order in SAMPLE_ORDERS:
+    cursor.execute(
+        "INSERT INTO orders (order_id, order_contents, status, price, customer_email) VALUES (?, ?, ?, ?, ?)",
+        order
+    )
 
 conn.commit()
 conn.close()
 
-print("Database seeded successfully with ticket data, comments, and addresses.")
+print("Database seeded successfully with order data and customer ERP information.")
