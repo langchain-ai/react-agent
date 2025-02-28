@@ -6,6 +6,7 @@ import uvicorn
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from langchain_core.messages import HumanMessage, BaseMessage
+from langgraph.checkpoint.sqlite import SqliteSaver
 from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
 from langgraph.types import Command
 
@@ -13,7 +14,7 @@ from tw_ai_agents.agents.graph_creator import (
     get_complete_graph,
     get_input_configs,
 )
-from tw_ai_agents.agents.tw_supervisor import run_supervisor
+from tw_ai_agents.agents.tw_supervisor import run_supervisor, run_supervisor_s
 from tw_ai_agents.agents.message_types.base_message_type import State
 from tw_ai_agents.agents.utils import load_chat_model
 from tw_ai_agents.config.constants import DB_CHECKPOINT_PATH
@@ -147,9 +148,10 @@ def process_agent_response(
             metadata = response["metadata"]
 
         metadata["discussion_id"] = request.discussion_id
+        target_entity = metadata.get("target_entity", "user")
 
         return AgentResponseModel(
-            message_type="user",
+            message_type=target_entity,
             message_text=str(last_message.content),
             message_id=message_id,
             metadata=metadata,

@@ -88,5 +88,3 @@ def _make_call_agent(
         return _process_output(output, old_messages)
 
     return RunnableCallable(call_agent, acall_agent)
-
-

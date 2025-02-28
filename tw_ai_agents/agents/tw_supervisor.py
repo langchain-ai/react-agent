@@ -1,25 +1,20 @@
-import asyncio  # Added import for asyncio
 import inspect
-from typing import Callable, List, Optional, Union, Dict
 import sqlite3
-from typing import Callable, List, Optional, Union
+from typing import Callable, Dict, List, Optional, Union
 
 from langchain.prompts import Prompt
 from langchain_core.language_models import LanguageModelLike
+from langchain_core.messages import AIMessage
 from langchain_core.tools import BaseTool
+from langgraph.checkpoint.sqlite import SqliteSaver
 from langgraph.graph import START, StateGraph
 from langgraph.graph.state import CompiledStateGraph
-from langgraph.prebuilt import create_react_agent, ToolNode
-from langgraph.prebuilt.chat_agent_executor import StateSchemaType, AgentState
+from langgraph.prebuilt import ToolNode, create_react_agent
+from langgraph.prebuilt.chat_agent_executor import AgentState, StateSchemaType
 
 from tw_ai_agents.agents.handoff import create_handoff_tool
 from tw_ai_agents.agents.message_types.base_message_type import State
-from tw_ai_agents.agents.supervisor_utils import (
-    OutputMode,
-    _make_call_agent,
-)
-from langgraph.checkpoint.sqlite import SqliteSaver
-
+from tw_ai_agents.agents.supervisor_utils import OutputMode, _make_call_agent
 
 conn = sqlite3.connect("checkpoints.sqlite")
 memory = SqliteSaver(conn)
@@ -172,10 +167,26 @@ async def run_supervisor(state: State, graph, config) -> Dict:
     Returns:
         The updated state with results and metadata about the execution
     """
-    try:
-        result = await graph.ainvoke(state, config=config)
-    except InterruptedError:
-        a = 1
+    result = {"messages": [], "metadata": {"tool_calls": []}}
+    async for chunk in graph.astream(state, config=config):
+        if "__interrupt__" in chunk:
+            # human interruption
+            new_message = AIMessage(content=chunk["__interrupt__"][0].value)
+            metadata = {
+                "ns": chunk["__interrupt__"][0].ns,
+                "target_entity": "agent",
+            }
+            result["messages"].append(new_message)
+            result["metadata"].update(metadata)
+        else:
+            for key, values in chunk.items():
+                if isinstance(values, list):
+                    for value in values:
+                        result["messages"].extend(value.get("messages", []))
+                        result["metadata"].update(value.get("metadata", {}))
+                else:
+                    result["messages"].extend(values.get("messages", []))
+                    result["metadata"].update(values.get("metadata", {}))
 
     if "metadata" not in result:
         result["metadata"] = {}

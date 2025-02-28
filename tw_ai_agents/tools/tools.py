@@ -316,7 +316,7 @@ def real_human_agent_execute_actions(query: str) -> str:
         query,
     )
     print(f"> Received an input from the interrupt: {answer}")
-    return {"human_value": answer}
+    return {"human_response": answer}
 
 
 @tool("handoff_conversation_to_real_agent")
@@ -324,11 +324,9 @@ def handoff_conversation_to_real_agent() -> str:
     """
     Handoff the full conversation to a real agent.
     """
-    a = 1
-
     answer = interrupt(
         # This value will be sent to the client
         # as part of the interrupt information.
         "Handoff the full conversation to a real agent.",
     )
-    return {"human_value": answer}
+    return {"human_response": answer}
