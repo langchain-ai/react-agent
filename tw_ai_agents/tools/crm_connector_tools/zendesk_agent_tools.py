@@ -1,4 +1,4 @@
-from langchain import hub
+import copy
 from langchain_core.tools import tool
 from langchain_openai import ChatOpenAI
 from typing import Optional, List
