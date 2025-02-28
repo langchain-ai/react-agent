@@ -32,7 +32,9 @@ from tw_ai_agents.tools.tools import (
 load_dotenv()
 
 
-def get_complete_graph(model, configs: dict, memory) -> TWSupervisor:
+def get_complete_graph(
+    model, configs: dict, memory, channel_type_id: str
+) -> TWSupervisor:
     """Test the orchestrator system with a simple query."""
 
     supervisor_tools = []
@@ -96,7 +98,7 @@ def get_complete_graph(model, configs: dict, memory) -> TWSupervisor:
             )
 
         name = _normalize_agent_name(config["name"])
-        handoff_conditions = config["handoffConditions"]
+        handoff_conditions = config["handoffConditions"]["text"]
         agent_prompt = hub.pull("case_agent_initial_prompt").format(
             instructions=instructions, handoff_conditions=handoff_conditions
         )
@@ -114,6 +116,20 @@ def get_complete_graph(model, configs: dict, memory) -> TWSupervisor:
             )
         )
 
+    # Main Supervisor
+    correct_channel = next(
+        (
+            channel
+            for channel in configs["channels"]
+            if channel["channelTypeId"] == channel_type_id
+        ),
+        None,
+    )
+    if correct_channel is None:
+        raise ValueError("Channel type not found in the configuration data.")
+    channel_type = correct_channel["channelType"]["name"]
+    channel_rules = correct_channel["instructions"]["text"]
+
     starting_supervisor_prompt = hub.pull("tw-supervisor-system-prompt")
     final_supervisor_prompt = starting_supervisor_prompt.format(
         agents="\n - ".join(
@@ -122,6 +138,8 @@ def get_complete_graph(model, configs: dict, memory) -> TWSupervisor:
         tools="\n - ".join(
             [tool.get_pretty_description() for tool in supervisor_tools]
         ),
+        channel_type=channel_type,
+        channel_rules=channel_rules,
     )
 
     supervisor_system = TWSupervisor(
