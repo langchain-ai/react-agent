@@ -26,6 +26,7 @@ from tw_ai_agents.tools.crm_connector_tools.update_erp_info_tool import (
 from tw_ai_agents.tools.tools import (
     get_knowledge_info,
     handoff_conversation_to_real_agent,
+    real_human_agent_execute_actions,
 )
 
 # Load environment variables
@@ -52,7 +53,10 @@ def get_complete_graph(
             memory=memory,
         ),
     ]
-    shared_tools = [handoff_conversation_to_real_agent]
+    shared_tools = [
+        handoff_conversation_to_real_agent,
+        real_human_agent_execute_actions,
+    ]
 
     for config in configs["caseCategories"]:
         description = config["description"]
