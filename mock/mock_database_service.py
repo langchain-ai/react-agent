@@ -1,7 +1,7 @@
 import sqlite3
 import os
-from typing import List, Tuple, Optional
-from mock.sample_tickets import SAMPLE_TICKETS
+from typing import List, Tuple, Optional, Dict, Any
+from mock.sample_tickets import SAMPLE_TICKETS, SAMPLE_COMMENTS, SAMPLE_ADDRESSES
 
 
 class MockDatabaseService:
@@ -39,6 +39,44 @@ class MockDatabaseService:
 
         cursor.execute(
             'SELECT ticketContents FROM tickets WHERE ticketId = ?', (ticket_id,))
+        result = cursor.fetchone()
+
+        conn.close()
+        return result[0] if result else None
+
+    def get_ticket_comments(self, ticket_id: str) -> List[str]:
+        """Get comments for a specific ticket.
+
+        Args:
+            ticket_id: The ID of the ticket to retrieve comments for
+
+        Returns:
+            List of comments for the ticket
+        """
+        conn = self._get_connection()
+        cursor = conn.cursor()
+
+        cursor.execute(
+            'SELECT commentText FROM comments WHERE ticketId = ? ORDER BY commentId', (ticket_id,))
+        results = cursor.fetchall()
+
+        conn.close()
+        return [comment[0] for comment in results] if results else []
+
+    def get_ticket_address(self, ticket_id: str) -> Optional[str]:
+        """Get the address associated with a ticket.
+
+        Args:
+            ticket_id: The ID of the ticket to retrieve the address for
+
+        Returns:
+            The address or None if not found
+        """
+        conn = self._get_connection()
+        cursor = conn.cursor()
+
+        cursor.execute(
+            'SELECT address FROM addresses WHERE ticketId = ?', (ticket_id,))
         result = cursor.fetchone()
 
         conn.close()
@@ -129,8 +167,10 @@ class MockDatabaseService:
         conn = self._get_connection()
         cursor = conn.cursor()
 
-        # Drop the existing table if it exists
+        # Drop the existing tables if they exist
         cursor.execute('DROP TABLE IF EXISTS tickets')
+        cursor.execute('DROP TABLE IF EXISTS comments')
+        cursor.execute('DROP TABLE IF EXISTS addresses')
 
         # Create the tickets table
         cursor.execute('''
@@ -140,9 +180,40 @@ class MockDatabaseService:
         )
         ''')
 
+        # Create the comments table
+        cursor.execute('''
+        CREATE TABLE IF NOT EXISTS comments (
+            commentId INTEGER PRIMARY KEY AUTOINCREMENT,
+            ticketId TEXT,
+            commentText TEXT,
+            FOREIGN KEY (ticketId) REFERENCES tickets (ticketId)
+        )
+        ''')
+
+        # Create the addresses table
+        cursor.execute('''
+        CREATE TABLE IF NOT EXISTS addresses (
+            addressId INTEGER PRIMARY KEY AUTOINCREMENT,
+            ticketId TEXT UNIQUE,
+            address TEXT,
+            FOREIGN KEY (ticketId) REFERENCES tickets (ticketId)
+        )
+        ''')
+
         # Insert sample data
         cursor.executemany(
             'INSERT OR REPLACE INTO tickets (ticketId, ticketContents) VALUES (?, ?)', SAMPLE_TICKETS)
+
+        # Insert sample comments
+        for ticket_id, comment_text in SAMPLE_COMMENTS:
+            cursor.execute(
+                'INSERT INTO comments (ticketId, commentText) VALUES (?, ?)',
+                (ticket_id, comment_text)
+            )
+
+        # Insert sample addresses
+        cursor.executemany(
+            'INSERT OR REPLACE INTO addresses (ticketId, address) VALUES (?, ?)', SAMPLE_ADDRESSES)
 
         # Commit changes and close connection
         conn.commit()
