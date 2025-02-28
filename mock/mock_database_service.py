@@ -1,13 +1,18 @@
-import sqlite3
 import os
-from typing import List, Tuple, Optional, Dict, Any
-from mock.sample_tickets import SAMPLE_TICKETS, SAMPLE_COMMENTS, SAMPLE_ADDRESSES
+import sqlite3
+from typing import Any, Dict, List, Optional, Tuple
+
+from mock.sample_tickets import (
+    SAMPLE_ADDRESSES,
+    SAMPLE_COMMENTS,
+    SAMPLE_TICKETS,
+)
 
 
 class MockDatabaseService:
     """Service to interact with the mock ticket database."""
 
-    def __init__(self, db_path: str = 'mock/data/tickets.db'):
+    def __init__(self, db_path: str = "mock/data/tickets.db"):
         """Initialize the database service.
 
         Args:
@@ -25,6 +30,44 @@ class MockDatabaseService:
         os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
         return sqlite3.connect(self.db_path)
 
+    def update_customer_address(
+        self, email_id: str, new_address: str
+    ) -> Optional[str]:
+        """Update the address of a customer, given their email ID and the new address.
+
+        Args:
+            email_id: The email ID of the customer to update the address for
+            new_address: The new address to update the customer with
+        """
+        conn = self._get_connection()
+        cursor = conn.cursor()
+
+        cursor.execute(
+            "UPDATE customers SET address = ? WHERE email = ?",
+            (new_address, email_id),
+        )
+        conn.commit()
+        conn.close()
+
+    def update_customer_document_id(
+        self, email_id: str, document_id: str
+    ) -> Optional[str]:
+        """Update the document ID of a customer, given their email ID and the new document ID.
+
+        Args:
+            email_id: The email ID of the customer to update the document ID for
+            document_id: The new document ID to update the customer with
+        """
+        conn = self._get_connection()
+        cursor = conn.cursor()
+
+        cursor.execute(
+            "UPDATE customers SET documentId = ? WHERE email = ?",
+            (document_id, email_id),
+        )
+        conn.commit()
+        conn.close()
+
     def get_ticket(self, ticket_id: str) -> Optional[str]:
         """Get ticket contents by ticket ID.
 
@@ -38,7 +81,9 @@ class MockDatabaseService:
         cursor = conn.cursor()
 
         cursor.execute(
-            'SELECT ticketContents FROM tickets WHERE ticketId = ?', (ticket_id,))
+            "SELECT ticketContents FROM tickets WHERE ticketId = ?",
+            (ticket_id,),
+        )
         result = cursor.fetchone()
 
         conn.close()
@@ -57,7 +102,9 @@ class MockDatabaseService:
         cursor = conn.cursor()
 
         cursor.execute(
-            'SELECT commentText FROM comments WHERE ticketId = ? ORDER BY commentId', (ticket_id,))
+            "SELECT commentText FROM comments WHERE ticketId = ? ORDER BY commentId",
+            (ticket_id,),
+        )
         results = cursor.fetchall()
 
         conn.close()
@@ -76,7 +123,8 @@ class MockDatabaseService:
         cursor = conn.cursor()
 
         cursor.execute(
-            'SELECT address FROM addresses WHERE ticketId = ?', (ticket_id,))
+            "SELECT address FROM addresses WHERE ticketId = ?", (ticket_id,)
+        )
         result = cursor.fetchone()
 
         conn.close()
@@ -91,7 +139,7 @@ class MockDatabaseService:
         conn = self._get_connection()
         cursor = conn.cursor()
 
-        cursor.execute('SELECT ticketId, ticketContents FROM tickets')
+        cursor.execute("SELECT ticketId, ticketContents FROM tickets")
         results = cursor.fetchall()
 
         conn.close()
@@ -110,8 +158,10 @@ class MockDatabaseService:
         conn = self._get_connection()
         cursor = conn.cursor()
 
-        cursor.execute('UPDATE tickets SET ticketContents = ? WHERE ticketId = ?',
-                       (contents, ticket_id))
+        cursor.execute(
+            "UPDATE tickets SET ticketContents = ? WHERE ticketId = ?",
+            (contents, ticket_id),
+        )
         success = cursor.rowcount > 0
 
         conn.commit()
@@ -132,8 +182,10 @@ class MockDatabaseService:
         cursor = conn.cursor()
 
         try:
-            cursor.execute('INSERT INTO tickets (ticketId, ticketContents) VALUES (?, ?)',
-                           (ticket_id, contents))
+            cursor.execute(
+                "INSERT INTO tickets (ticketId, ticketContents) VALUES (?, ?)",
+                (ticket_id, contents),
+            )
             success = True
         except sqlite3.IntegrityError:
             # Ticket ID already exists
@@ -155,7 +207,7 @@ class MockDatabaseService:
         conn = self._get_connection()
         cursor = conn.cursor()
 
-        cursor.execute('DELETE FROM tickets WHERE ticketId = ?', (ticket_id,))
+        cursor.execute("DELETE FROM tickets WHERE ticketId = ?", (ticket_id,))
         success = cursor.rowcount > 0
 
         conn.commit()
@@ -168,52 +220,62 @@ class MockDatabaseService:
         cursor = conn.cursor()
 
         # Drop the existing tables if they exist
-        cursor.execute('DROP TABLE IF EXISTS tickets')
-        cursor.execute('DROP TABLE IF EXISTS comments')
-        cursor.execute('DROP TABLE IF EXISTS addresses')
+        cursor.execute("DROP TABLE IF EXISTS tickets")
+        cursor.execute("DROP TABLE IF EXISTS comments")
+        cursor.execute("DROP TABLE IF EXISTS addresses")
 
         # Create the tickets table
-        cursor.execute('''
+        cursor.execute(
+            """
         CREATE TABLE IF NOT EXISTS tickets (
             ticketId TEXT PRIMARY KEY,
             ticketContents TEXT
         )
-        ''')
+        """
+        )
 
         # Create the comments table
-        cursor.execute('''
+        cursor.execute(
+            """
         CREATE TABLE IF NOT EXISTS comments (
             commentId INTEGER PRIMARY KEY AUTOINCREMENT,
             ticketId TEXT,
             commentText TEXT,
             FOREIGN KEY (ticketId) REFERENCES tickets (ticketId)
         )
-        ''')
+        """
+        )
 
         # Create the addresses table
-        cursor.execute('''
+        cursor.execute(
+            """
         CREATE TABLE IF NOT EXISTS addresses (
             addressId INTEGER PRIMARY KEY AUTOINCREMENT,
             ticketId TEXT UNIQUE,
             address TEXT,
             FOREIGN KEY (ticketId) REFERENCES tickets (ticketId)
         )
-        ''')
+        """
+        )
 
         # Insert sample data
         cursor.executemany(
-            'INSERT OR REPLACE INTO tickets (ticketId, ticketContents) VALUES (?, ?)', SAMPLE_TICKETS)
+            "INSERT OR REPLACE INTO tickets (ticketId, ticketContents) VALUES (?, ?)",
+            SAMPLE_TICKETS,
+        )
 
         # Insert sample comments
         for ticket_id, comment_text in SAMPLE_COMMENTS:
             cursor.execute(
-                'INSERT INTO comments (ticketId, commentText) VALUES (?, ?)',
-                (ticket_id, comment_text)
+                "INSERT INTO comments (ticketId, commentText) VALUES (?, ?)",
+                (ticket_id, comment_text),
             )
 
         # Insert sample addresses
         cursor.executemany(
-            'INSERT OR REPLACE INTO addresses (ticketId, address) VALUES (?, ?)', SAMPLE_ADDRESSES)
+            "INSERT OR REPLACE INTO addresses (ticketId, address) VALUES (?, ?)",
+            SAMPLE_ADDRESSES,
+        )
 
         # Commit changes and close connection
         conn.commit()

@@ -4,26 +4,28 @@ This script tests the orchestrator to ensure it works correctly.
 """
 
 import asyncio
-import requests
 from typing import Dict, Any
 
+import requests
 from dotenv import load_dotenv
 from langchain import hub
 from langchain_core.messages import HumanMessage
 from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
-from langgraph.types import Command
 
 from tw_ai_agents.agents.handoff import _normalize_agent_name
 from tw_ai_agents.agents.message_types.base_message_type import State
 from tw_ai_agents.agents.tw_supervisor import TWSupervisor
 from tw_ai_agents.agents.utils import load_chat_model
-from tw_ai_agents.tools.actions_retriever import AgentListElement, AGENT_LIST
-from tw_ai_agents.tools.crm_connector_tools.zendesk_agent_tools import (
-    ZendeskAgentWithTools,
+from tw_ai_agents.tools.actions_retriever import AGENT_LIST
+from tw_ai_agents.tools.crm_connector_tools.read_erp_info_tool import (
+    ReadERPInfoTool,
+)
+from tw_ai_agents.tools.crm_connector_tools.update_erp_info_tool import (
+    UpdateERPInfoTool,
 )
 from tw_ai_agents.tools.tools import (
     get_knowledge_info,
-    real_human_agent_execute_actions,
+    handoff_conversation_to_real_agent,
 )
 
 # Load environment variables
@@ -35,6 +37,26 @@ def get_complete_graph(model, configs: dict, memory) -> TWSupervisor:
 
     supervisor_tools = []
     subagents_list = []
+    update_erp = UpdateERPInfoTool()
+    update_erp_tool = TWSupervisor(
+        agents=[],
+        model=model,
+        tools=update_erp.get_tools(),
+        prompt=update_erp.system_prompt,
+        state_schema=State,
+        supervisor_name=update_erp.node_name,
+        description=update_erp.description,
+    )
+    read_erp = ReadERPInfoTool()
+    read_erp_tool = TWSupervisor(
+        agents=[],
+        model=model,
+        tools=read_erp.get_tools(),
+        prompt=read_erp.system_prompt,
+        state_schema=State,
+        supervisor_name=read_erp.node_name,
+        description=read_erp.description,
+    )
     shared_agents = [
         # Now, create a second supervisor that could potentially be called by the main supervisor
         TWSupervisor(
@@ -47,9 +69,10 @@ def get_complete_graph(model, configs: dict, memory) -> TWSupervisor:
             description="Agent able to lookup knowledge information.",
             memory=memory,
         ),
+        update_erp_tool,
+        read_erp_tool,
     ]
-    # shared_tools = [real_human_agent_execute_actions]
-    shared_tools = [real_human_agent_execute_actions]
+    shared_tools = [handoff_conversation_to_real_agent]
 
     for config in configs["caseCategories"]:
         description = config["description"]
@@ -74,12 +97,15 @@ def get_complete_graph(model, configs: dict, memory) -> TWSupervisor:
 
         name = _normalize_agent_name(config["name"])
         handoff_conditions = config["handoffConditions"]
+        agent_prompt = hub.pull("case_agent_initial_prompt").format(
+            instructions=instructions, handoff_conditions=handoff_conditions
+        )
         subagents_list.append(
             TWSupervisor(
                 agents=agent_list_as_tools + shared_agents,
                 tools=shared_tools,
                 model=model,
-                prompt=instructions,
+                prompt=agent_prompt,
                 state_schema=State,
                 supervisor_name=name,
                 description=description,

@@ -3,12 +3,16 @@ from typing import List
 
 from pydantic import BaseModel
 
-from tw_ai_agents.tools.crm_connector_tools.zendesk_agent_tools import (
-    ZendeskAgentWithTools,
+from tw_ai_agents.tools.crm_connector_tools.read_erp_info_tool import (
+    ReadERPInfoTool,
+)
+from tw_ai_agents.tools.crm_connector_tools.update_erp_info_tool import (
+    UpdateERPInfoTool,
 )
 
 AGENT_LIST = {
-    "ID_sdkjcnsdjhcnd": ZendeskAgentWithTools,
+    "ID_sdkjcnsdjhcnd": UpdateERPInfoTool,
+    "ID_sdfjksdfjksdf": ReadERPInfoTool,
 }
 
 

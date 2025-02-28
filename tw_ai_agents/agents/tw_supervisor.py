@@ -172,8 +172,10 @@ async def run_supervisor(state: State, graph, config) -> Dict:
     Returns:
         The updated state with results and metadata about the execution
     """
-    # try:
-    result = await graph.ainvoke(state, config=config)
+    try:
+        result = await graph.ainvoke(state, config=config)
+    except InterruptedError:
+        a = 1
 
     if "metadata" not in result:
         result["metadata"] = {}
