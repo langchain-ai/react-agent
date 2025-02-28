@@ -57,6 +57,7 @@ model = load_chat_model(model_name)
                                 "message_text": "Hello, how are you?\nI'd like to change the address for my account to Heinrichstrasse 237, Zurich, Switzerland. Please make sure to double check that this was actually done!",
                                 "discussion_id": "123456",
                                 "client": "typewise",
+                                "channel_type_id": "67bed9fe3b2f84a3a5e67779",
                             },
                         },
                         "vtours_flight_rebooking": {
@@ -66,6 +67,7 @@ model = load_chat_model(model_name)
                                 "message_text": "I need to rebook my flight",
                                 "discussion_id": "123456",
                                 "client": "vtours",
+                                "channel_type_id": "67bed9fe3b2f84a3a5e67779",
                             },
                         },
                     }
@@ -116,7 +118,12 @@ def process_agent_response(
         async with AsyncSqliteSaver.from_conn_string(
             DB_CHECKPOINT_PATH
         ) as saver:
-            graph = get_complete_graph(model, input_configs, memory=saver)
+            graph = get_complete_graph(
+                model,
+                input_configs,
+                memory=saver,
+                channel_type_id=request.channel_type_id,
+            )
             # Your code here
             compiled_supervisor = graph.get_supervisor_compiled_graph()
             config = {"configurable": {"thread_id": request.discussion_id}}
