@@ -149,14 +149,14 @@ def process_agent_response(
         metadata["discussion_id"] = request.discussion_id
 
         return AgentResponseModel(
-            message_type="agent",
+            message_type="user",
             message_text=str(last_message.content),
             message_id=message_id,
             metadata=metadata,
         )
     else:
         return AgentResponseModel(
-            message_type="agent",
+            message_type="user",
             message_text="I'm sorry, I couldn't process your request at this time.",
             message_id=str(uuid.uuid4()),
             metadata={
