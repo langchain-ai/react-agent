@@ -58,7 +58,9 @@ def create_handoff_tool(
     ) -> Command:
         """Ask another agent for help."""
         tool_message = ToolMessage(
-            content=f"Successfully transferred to {agent_name}\n\n## Message from the supervisor\n{message_for_subagent}",
+            content=f"Successfully transferred to {agent_name}\n\n"
+            f"## Message from the supervisor\n"
+            f"{message_for_subagent}",
             name=tool_name,
             tool_call_id=tool_call_id,
         )

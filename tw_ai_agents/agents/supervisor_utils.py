@@ -58,6 +58,13 @@ def _make_call_agent(
                 create_handoff_back_messages(agent.name, supervisor_name)
             )
 
+        # Add From Supervisor to the last message
+        last_message = messages[-1]
+        last_message.content = (
+            f"## Response from sub-agent\n{last_message.content}"
+        )
+        messages[-1] = last_message
+
         return {
             **output,
             "messages": messages,
