@@ -35,16 +35,6 @@ def get_complete_graph(model, configs: dict, memory) -> TWSupervisor:
 
     supervisor_tools = []
     subagents_list = []
-    zst = ZendeskAgentWithTools()
-    zendesk_getter_with_tools = TWSupervisor(
-        agents=[],
-        model=model,
-        tools=zst.get_tools(),
-        prompt=zst.system_prompt,
-        state_schema=State,
-        supervisor_name=zst.node_name,
-        description=zst.description,
-    )
     shared_agents = [
         # Now, create a second supervisor that could potentially be called by the main supervisor
         TWSupervisor(
@@ -57,7 +47,6 @@ def get_complete_graph(model, configs: dict, memory) -> TWSupervisor:
             description="Agent able to lookup knowledge information.",
             memory=memory,
         ),
-        zendesk_getter_with_tools,
     ]
     # shared_tools = [real_human_agent_execute_actions]
     shared_tools = [real_human_agent_execute_actions]
@@ -66,10 +55,10 @@ def get_complete_graph(model, configs: dict, memory) -> TWSupervisor:
         description = config["description"]
         instructions_with_tools = config["instructions"]
         instructions = instructions_with_tools["text"]
-        tools = instructions_with_tools["actions"]
-        agent_list = [AGENT_LIST[action["id"]] for action in tools]
+        action_list = instructions_with_tools["actions"]
         agent_list_as_tools = []
-        for agent in agent_list:
+        for action in action_list:
+            agent = AGENT_LIST[action["id"]]
             new_agent = agent()
             agent_list_as_tools.append(
                 TWSupervisor(
