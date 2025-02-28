@@ -168,3 +168,5 @@ cython_debug/
 
 
 /.langgraph_api
+/checkpoints.sqlite
+/mock/data/tickets.db

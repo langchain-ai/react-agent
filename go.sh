@@ -18,4 +18,6 @@ fi
 
 # Run the server
 echo "Starting server..."
+PYTHONPATH="." python3 ./mock/seed.py
 PYTHONPATH="." python3 ./tw_ai_agents/server.py
+ 
