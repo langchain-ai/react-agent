@@ -1,7 +1,7 @@
 import asyncio
 import os
 import uuid
-from typing import Dict, Any, List, cast
+from typing import Dict, Any, List, cast, Optional
 import uvicorn
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
@@ -15,6 +15,7 @@ from tw_ai_agents.agents.graph_creator import (
 from tw_ai_agents.agents.tw_supervisor import run_supervisor
 from tw_ai_agents.agents.message_types.base_message_type import State
 from tw_ai_agents.agents.utils import load_chat_model
+from tw_ai_agents.config.constants import DB_CHECKPOINT_PATH
 from tw_ai_agents.pydantic_models.agent_models import (
     AgentResponseRequest,
     AgentResponseModel,
@@ -93,14 +94,14 @@ def process_agent_response(
         # Initialize a proper State object using dict notation
         initial_state: State = {
             "messages": [message],
-            # "next": "tw_supervisor",
+            "next": "tw_supervisor",  # Required field in State class
             "metadata": {"discussion_id": request.discussion_id},
             "remaining_steps": 10,
         }
 
         async def run_supervisor_with_graph():
             async with AsyncSqliteSaver.from_conn_string(
-                "checkpoints.sqlite"
+                DB_CHECKPOINT_PATH
             ) as saver:
                 graph = get_complete_graph(
                     model, get_input_configs(), memory=saver

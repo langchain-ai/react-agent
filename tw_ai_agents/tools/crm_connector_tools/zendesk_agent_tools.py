@@ -1,4 +1,4 @@
-from langchain import hub
+import copy
 from langchain_core.tools import tool
 from langchain_openai import ChatOpenAI
 
@@ -24,6 +24,7 @@ class ZendeskAgentWithTools(BaseAgentWithTools):
             node_name=node_name,
             description=description,
         )
+        self.state_database = copy.deepcopy(self.BASE_DATABASE)
 
     @tool
     @staticmethod
