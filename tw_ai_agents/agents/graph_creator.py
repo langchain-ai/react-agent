@@ -39,26 +39,6 @@ def get_complete_graph(
 
     supervisor_tools = []
     subagents_list = []
-    update_erp = UpdateERPInfoTool()
-    update_erp_tool = TWSupervisor(
-        agents=[],
-        model=model,
-        tools=update_erp.get_tools(),
-        prompt=update_erp.system_prompt,
-        state_schema=State,
-        supervisor_name=update_erp.node_name,
-        description=update_erp.description,
-    )
-    read_erp = ReadERPInfoTool()
-    read_erp_tool = TWSupervisor(
-        agents=[],
-        model=model,
-        tools=read_erp.get_tools(),
-        prompt=read_erp.system_prompt,
-        state_schema=State,
-        supervisor_name=read_erp.node_name,
-        description=read_erp.description,
-    )
     shared_agents = [
         # Now, create a second supervisor that could potentially be called by the main supervisor
         TWSupervisor(
@@ -71,8 +51,6 @@ def get_complete_graph(
             description="Agent able to lookup knowledge information.",
             memory=memory,
         ),
-        update_erp_tool,
-        read_erp_tool,
     ]
     shared_tools = [handoff_conversation_to_real_agent]
 

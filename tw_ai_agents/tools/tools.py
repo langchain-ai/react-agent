@@ -293,7 +293,7 @@ def get_knowledge_info(query: str) -> str:
         A string containing the information from the knowledge base.
     """
 
-    return "Knowledge info retrieved"
+    return "Knowledge info retrieved for the query: " + query
 
 
 @tool("real_human_agent_execute_actions")
