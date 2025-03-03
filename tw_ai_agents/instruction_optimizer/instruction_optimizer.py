@@ -13,6 +13,7 @@ from fastapi import HTTPException
 from openai import AsyncOpenAI
 from dotenv import load_dotenv
 from langchain import hub
+
 # Load environment variables
 load_dotenv()
 
@@ -22,11 +23,13 @@ client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 class InstructionOptimizationRequest(BaseModel):
     """Request model for instruction optimization."""
+
     instruction_text: str = Field(..., min_length=1, max_length=4000)
 
 
 class InstructionOptimizationResponse(BaseModel):
     """Response model for instruction optimization."""
+
     corrected_text: str
     suggestions: List[str]
 
@@ -35,7 +38,9 @@ def sanitize_input(text: str) -> str:
     return text
 
 
-async def optimize_instruction(request: InstructionOptimizationRequest) -> InstructionOptimizationResponse:
+async def optimize_instruction(
+    request: InstructionOptimizationRequest,
+) -> InstructionOptimizationResponse:
     """Optimize an instruction for better AI responses using OpenAI directly.
 
     Args:
@@ -50,72 +55,19 @@ async def optimize_instruction(request: InstructionOptimizationRequest) -> Instr
     try:
         # Sanitize the input to prevent prompt injection
         sanitized_instruction = sanitize_input(request.instruction_text)
-        langchainPrompt = hub.pull("agent-optimize_instructions")
-        system_message = langchainPrompt.messages[0].prompt.template
-
-        user_prompt = langchainPrompt.messages[1].format(
-            instructions=sanitized_instruction).content
-
-        tools = [
-            {
-                "type": "function",
-                "function": {
-                    "name": "optimize_instruction",
-                    "description": "Optimize an instruction to make it clearer, more specific, and more effective",
-                    "parameters": {
-                        "type": "object",
-                        "properties": {
-                            "corrected_text": {
-                                "type": "string",
-                                "description": "The optimized version of the instruction formatted as bullet points"
-                            },
-                            "suggestions": {
-                                "type": "array",
-                                "items": {
-                                    "type": "string"
-                                },
-                                "description": "List of suggestions for improving the instruction"
-                            }
-                        },
-                        "required": ["corrected_text", "suggestions"]
-                    }
-                }
-            }
-        ]
-
-        # Create a prompt for OpenAI with clear boundaries
-#         prompt = f"""Your task is to optimize the following instruction to make it clearer, more specific, and more effective.
-
-# INSTRUCTION TO OPTIMIZE: {sanitized_instruction}"""
-
-        response = await client.chat.completions.create(
-            model="gpt-4o",
-            messages=[
-                {"role": "system",
-                 "content": system_message},
-                {"role": "user", "content": user_prompt}
-            ],
-            tools=tools,
-            tool_choice={"type": "function", "function": {
-                "name": "optimize_instruction"}},
-            temperature=0.3
+        langchain_prompt_model = hub.pull(
+            "agent-optimize_instructions", include_model=True
         )
-
-        # Extract the function call result
-        function_call = response.choices[0].message.tool_calls[0]
-        result = json.loads(function_call.function.arguments)
-
-        return InstructionOptimizationResponse(
-            corrected_text=result["corrected_text"],
-            suggestions=result["suggestions"]
+        response = await langchain_prompt_model.ainvoke(
+            {"instructions": sanitized_instruction}
         )
+        return InstructionOptimizationResponse(**response)
 
     except Exception as e:
         # Log the specific error for debugging
         print(f"Error in optimize_instruction: {str(e)}")
         raise HTTPException(
-            status_code=500,
-            detail=f"Error optimizing instruction: {str(e)}"
+            status_code=500, detail=f"Error optimizing instruction: {str(e)}"
         )
 
 
