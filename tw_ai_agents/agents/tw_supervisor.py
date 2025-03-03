@@ -102,7 +102,7 @@ class TWSupervisor:
             for agent, description in processed_agents
         ]
         all_tools = (self.tools or []) + handoff_tools
-        # all_tools = handoff_tools
+
         if (
             hasattr(self.model, "bind_tools")
             and "parallel_tool_calls"

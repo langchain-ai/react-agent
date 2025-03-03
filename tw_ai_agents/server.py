@@ -10,7 +10,7 @@ from langchain_core.messages import HumanMessage, BaseMessage
 from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
 from langgraph.types import Command
 
-from instruction_optimizer.instruction_optimizer import (
+from tw_ai_agents.instruction_optimizer.instruction_optimizer import (
     InstructionOptimizationRequest,
     InstructionOptimizationResponse,
     optimize_instruction,
