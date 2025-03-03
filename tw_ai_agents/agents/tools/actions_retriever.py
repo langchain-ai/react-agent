@@ -1,12 +1,11 @@
-from dataclasses import dataclass
 from typing import List
 
 from pydantic import BaseModel
 
-from tw_ai_agents.tools.crm_connector_tools.read_erp_info_tool import (
+from tw_ai_agents.agents.tools.crm_connector_tools.read_erp_info_tool import (
     ReadERPInfoTool,
 )
-from tw_ai_agents.tools.crm_connector_tools.update_erp_info_tool import (
+from tw_ai_agents.agents.tools.crm_connector_tools.update_erp_info_tool import (
     UpdateERPInfoTool,
 )
 

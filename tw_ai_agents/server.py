@@ -21,12 +21,12 @@ from tw_ai_agents.agents.graph_creator import (
 )
 from tw_ai_agents.agents.tw_supervisor import run_supervisor
 from tw_ai_agents.agents.utils import load_chat_model
-from tw_ai_agents.config.constants import DB_CHECKPOINT_PATH
-from tw_ai_agents.pydantic_models.agent_models import (
+from tw_ai_agents.config_handler.constants import DB_CHECKPOINT_PATH
+from tw_ai_agents.config_handler.pydantic_models.agent_models import (
     AgentResponseRequest,
     AgentResponseModel,
 )
-from tw_ai_agents.tools.actions_retriever import (
+from tw_ai_agents.agents.tools.actions_retriever import (
     get_agent_list,
     ActionListReturnModel,
 )

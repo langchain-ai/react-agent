@@ -1,11 +1,8 @@
-import copy
-from typing import List, Optional
-
 from langchain_core.tools import tool
 from langchain_openai import ChatOpenAI
 
 from mock.mock_database_service import MockDatabaseService
-from tw_ai_agents.tools.base_agent_tools import BaseAgentWithTools
+from tw_ai_agents.agents.tools.base_agent_tools import BaseAgentWithTools
 
 llm = ChatOpenAI(model="gpt-4o")
 
@@ -42,7 +39,7 @@ class ReadERPInfoTool(BaseAgentWithTools):
             email_id: The email ID of the customer to read the address for
         :return: The address of the customer
         """
-        db_service =  MockDatabaseService()
+        db_service = MockDatabaseService()
         address = db_service.get_customer_address(email_id)
         if address:
             return address

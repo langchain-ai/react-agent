@@ -1,11 +1,8 @@
-import copy
-from typing import List, Optional
-
 from langchain_core.tools import tool
 from langchain_openai import ChatOpenAI
 
 from mock.mock_database_service import MockDatabaseService
-from tw_ai_agents.tools.base_agent_tools import BaseAgentWithTools
+from tw_ai_agents.agents.tools.base_agent_tools import BaseAgentWithTools
 
 llm = ChatOpenAI(model="gpt-4o")
 
@@ -21,7 +18,6 @@ class UpdateERPInfoTool(BaseAgentWithTools):
         #     "zendesk_info_searcher-system_prompt"
         # ).content
         # description = hub.pull("zendesk_info_searcher-description").content
-
 
         super().__init__(
             system_prompt=base_system_prompt,

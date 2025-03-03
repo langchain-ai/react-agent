@@ -16,14 +16,8 @@ from tw_ai_agents.agents.handoff import _normalize_agent_name
 from tw_ai_agents.agents.message_types.base_message_type import State
 from tw_ai_agents.agents.tw_supervisor import TWSupervisor
 from tw_ai_agents.agents.utils import load_chat_model
-from tw_ai_agents.tools.actions_retriever import AGENT_LIST
-from tw_ai_agents.tools.crm_connector_tools.read_erp_info_tool import (
-    ReadERPInfoTool,
-)
-from tw_ai_agents.tools.crm_connector_tools.update_erp_info_tool import (
-    UpdateERPInfoTool,
-)
-from tw_ai_agents.tools.tools import (
+from tw_ai_agents.agents.tools.actions_retriever import AGENT_LIST
+from tw_ai_agents.agents.tools.tools import (
     get_knowledge_info,
     handoff_conversation_to_real_agent,
     real_human_agent_execute_actions,
