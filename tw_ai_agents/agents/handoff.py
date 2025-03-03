@@ -5,11 +5,20 @@ This module provides tools for transferring control between agents in a multi-ag
 
 import re
 import uuid
+from typing import Literal, Callable, Dict, Optional, Tuple, List
 
-from langchain_core.messages import AIMessage, ToolMessage, ToolCall
+from langchain_core.messages import (
+    AIMessage,
+    ToolMessage,
+    ToolCall,
+    BaseMessage,
+    HumanMessage,
+)
 from langchain_core.tools import tool, BaseTool
 from langchain_core.tools.base import InjectedToolCallId
+from langgraph.graph.state import CompiledStateGraph
 from langgraph.types import Command
+from langgraph.utils.runnable import RunnableCallable
 from pydantic import BaseModel
 from typing_extensions import Annotated
 
@@ -92,3 +101,92 @@ def create_handoff_back_messages(
             tool_call_id=tool_call_id,
         ),
     )
+
+
+OutputMode = Literal["full_history", "last_message"]
+
+
+def _make_call_agent(
+    agent: CompiledStateGraph,
+    output_mode: OutputMode,
+    add_handoff_back_messages: bool,
+    supervisor_name: str,
+    input_mode: OutputMode = "last_message",
+) -> Callable[[Dict], Dict]:
+    """
+    Create a function that calls an agent and processes its output.
+    This function is what is actually executed when the handoff to a sub-agent happens.
+    Here is were we process messages going to and coming from sub-agents.
+
+    Args:
+        agent: The agent to call.
+        output_mode: How to handle the agent's message history.
+        add_handoff_back_messages: Whether to add handoff back messages.
+        supervisor_name: The name of the supervisor agent.
+
+    Returns:
+        A callable that invokes the agent and processes its output.
+    """
+    if output_mode not in OutputMode.__args__:  # type: ignore
+        raise ValueError(
+            f"Invalid agent output mode: {output_mode}. "
+            f"Needs to be one of {OutputMode.__args__}"  # type: ignore
+        )
+
+    def _process_output(
+        output: Dict, old_messages: Optional[Dict] = None
+    ) -> Dict:
+        messages = output["messages"]
+        if output_mode == "full_history":
+            messages = old_messages + messages
+        elif output_mode == "last_message":
+            messages = messages[-1:]
+        else:
+            raise ValueError(
+                f"Invalid agent output mode: {output_mode}. "
+                f"Needs to be one of {OutputMode.__args__}"  # type: ignore
+            )
+
+        if add_handoff_back_messages:
+            # Add handoff back messages using AIMessage and HumanMessage
+            messages.extend(
+                create_handoff_back_messages(agent.name, supervisor_name)
+            )
+
+        # Add From Supervisor to the last message
+        last_message = messages[-1]
+        last_message.content = (
+            f"## Response from sub-agent\n{last_message.content}"
+        )
+        messages[-1] = last_message
+
+        return {
+            **output,
+            "messages": messages,
+        }
+
+    def _process_input(input: Dict) -> Tuple[Dict, Optional[List[BaseMessage]]]:
+        if input_mode == "last_message":
+            # return on the last ToolMessage, convert it to a HumanMessage
+            last_message = input["messages"][-1]
+            other_messages = input["messages"][:-1]
+            if isinstance(last_message, ToolMessage):
+                last_message = HumanMessage(last_message.content)
+            input["messages"] = [last_message]
+            return input, other_messages
+        elif input_mode == "full_history":
+            return input, None
+        else:
+            raise ValueError(f"Invalid input mode: {input_mode}")
+
+    def call_agent(state: Dict) -> Dict:
+        state, old_messages = _process_input(state)
+        output = agent.invoke(state)
+        return _process_output(output, old_messages)
+
+    async def acall_agent(state: Dict) -> Dict:
+        state, old_messages = _process_input(state)
+        output = await agent.ainvoke(state)
+        return _process_output(output, old_messages)
+
+    return RunnableCallable(call_agent, acall_agent)

@@ -12,9 +12,12 @@ from langgraph.graph.state import CompiledStateGraph
 from langgraph.prebuilt import ToolNode, create_react_agent
 from langgraph.prebuilt.chat_agent_executor import AgentState, StateSchemaType
 
-from tw_ai_agents.agents.handoff import create_handoff_tool
+from tw_ai_agents.agents.handoff import (
+    create_handoff_tool,
+    OutputMode,
+    _make_call_agent,
+)
 from tw_ai_agents.agents.message_types.base_message_type import State
-from tw_ai_agents.agents.supervisor_utils import OutputMode, _make_call_agent
 
 conn = sqlite3.connect("checkpoints.sqlite")
 memory = SqliteSaver(conn)
@@ -152,21 +155,15 @@ class TWSupervisor:
     def get_pretty_description(self):
         return f"{self.supervisor_name}: {self.description}"
 
+    def _process_output_chunk(self, chunk, result):
+        """Process a chunk of output from the graph execution and update the result dictionary.
 
-async def run_supervisor(state: State, graph, config) -> Dict:
-    """Run the supervisor agent system with metadata tracking.
-
-    This function executes the supervisor graph and tracks metadata like tool usage
-    throughout the execution.
-
-    Args:
-        state: The initial state containing messages and other context
-
-    Returns:
-        The updated state with results and metadata about the execution
-    """
-    result = {"messages": [], "metadata": {"tool_calls": []}}
-    async for chunk in graph.astream(state, config=config):
+        :params
+            chunk: Output chunk from graph execution
+            result: Dictionary containing messages and metadata to update
+        :return
+            Updated result dictionary
+        """
         if "__interrupt__" in chunk:
             # human interruption
             new_message = AIMessage(content=chunk["__interrupt__"][0].value)
@@ -185,37 +182,79 @@ async def run_supervisor(state: State, graph, config) -> Dict:
                 else:
                     result["messages"].extend(values.get("messages", []))
                     result["metadata"].update(values.get("metadata", {}))
+        return result
 
-    if "metadata" not in result:
-        result["metadata"] = {}
+    def _extract_tool_calls(self, messages):
+        """Extract tool calls from a list of messages.
 
-    tool_calls = []
-    for message in result["messages"]:
-        # Check if this is a tool-related message
-        if hasattr(message, "additional_kwargs") and message.additional_kwargs:
-            # Extract tool calls from OpenAI format
-            if "tool_calls" in message.additional_kwargs:
-                for tool_call in message.additional_kwargs["tool_calls"]:
-                    tool_calls.append(
-                        {
-                            "tool_name": tool_call.get("function", {}).get(
-                                "name", "unknown"
-                            ),
-                            "tool_input": tool_call.get("function", {}).get(
-                                "arguments", "{}"
-                            ),
-                            "tool_id": tool_call.get("id", "unknown"),
-                        }
-                    )
+        :params
+            messages: List of messages to process
+        :return
+            List of extracted tool calls
+        """
+        tool_calls = []
+        for message in messages:
+            if (
+                hasattr(message, "additional_kwargs")
+                and message.additional_kwargs
+            ):
+                if "tool_calls" in message.additional_kwargs:
+                    for tool_call in message.additional_kwargs["tool_calls"]:
+                        tool_calls.append(
+                            {
+                                "tool_name": tool_call.get("function", {}).get(
+                                    "name", "unknown"
+                                ),
+                                "tool_input": tool_call.get("function", {}).get(
+                                    "arguments", "{}"
+                                ),
+                                "tool_id": tool_call.get("id", "unknown"),
+                            }
+                        )
+        return tool_calls
 
-    result["metadata"]["tool_calls"] = tool_calls
+    def run_supervisor(self, state: State, config) -> Dict:
+        """Run the supervisor agent system with metadata tracking synchronously.
 
-    return result
+        :params
+            state: The initial state containing messages and other context
+            config: Configuration for the graph execution
+        :return
+            The updated state with results and metadata about the execution
+        """
+        graph = self.get_supervisor_compiled_graph()
+        result = {"messages": [], "metadata": {"tool_calls": []}}
 
-    # except Exception as e:
-    #     # If there's an error, return a valid state with error information
-    #     return {
-    #         "messages": state.get("messages", []),
-    #         "next": "FINISH",
-    #         "metadata": {"error": str(e), "status": "error"},
-    #     }
+        for chunk in graph.stream(state, config=config):
+            result = self._process_output_chunk(chunk, result)
+
+        if "metadata" not in result:
+            result["metadata"] = {}
+
+        result["metadata"]["tool_calls"] = self._extract_tool_calls(
+            result["messages"]
+        )
+        return result
+
+    async def arun_supervisor(self, state: State, config) -> Dict:
+        """Run the supervisor agent system with metadata tracking asynchronously.
+
+        :params
+            state: The initial state containing messages and other context
+            config: Configuration for the graph execution
+        :return
+            The updated state with results and metadata about the execution
+        """
+        graph = self.get_supervisor_compiled_graph()
+        result = {"messages": [], "metadata": {"tool_calls": []}}
+
+        async for chunk in graph.astream(state, config=config):
+            result = self._process_output_chunk(chunk, result)
+
+        if "metadata" not in result:
+            result["metadata"] = {}
+
+        result["metadata"]["tool_calls"] = self._extract_tool_calls(
+            result["messages"]
+        )
+        return result

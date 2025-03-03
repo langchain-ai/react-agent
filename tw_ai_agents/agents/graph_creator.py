@@ -108,10 +108,12 @@ def get_complete_graph(
 
     starting_supervisor_prompt = hub.pull("tw-supervisor-system-prompt")
     final_supervisor_prompt = starting_supervisor_prompt.format(
-        agents="\n - ".join(
+        agents="- "
+        + "\n - ".join(
             [subagent.get_pretty_description() for subagent in subagents_list]
         ),
-        tools="\n - ".join(
+        tools="- "
+        + "\n - ".join(
             [tool.get_pretty_description() for tool in supervisor_tools]
         ),
         channel_type=channel_type,
@@ -126,7 +128,7 @@ def get_complete_graph(
         supervisor_name="tw_supervisor",
         description="Agent able to handle the flow of the conversation.",
         memory=memory,
-        tools=[],
+        tools=[handoff_conversation_to_real_agent],
     )
 
     return supervisor_system

@@ -7,6 +7,7 @@ import uvicorn
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from langchain_core.messages import HumanMessage, BaseMessage
+from langgraph.checkpoint.sqlite import SqliteSaver
 from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
 from langgraph.types import Command
 
@@ -19,7 +20,7 @@ from tw_ai_agents.agents.graph_creator import (
     get_complete_graph,
     get_input_configs,
 )
-from tw_ai_agents.agents.tw_supervisor import run_supervisor
+import time
 from tw_ai_agents.agents.utils import load_chat_model
 from tw_ai_agents.config_handler.constants import DB_CHECKPOINT_PATH
 from tw_ai_agents.config_handler.pydantic_models.agent_models import (
@@ -54,7 +55,7 @@ model = load_chat_model(model_name)
                             "value": {
                                 "message_type": "user",
                                 "message_text": "Hello, how are you?\nI'd like to change the address for my account to Heinrichstrasse 237, Zurich, Switzerland. Please make sure to double check that this was actually done!",
-                                "discussion_id": "123456",
+                                "discussion_id": f"123456_{int(time.time())}",
                                 "client": "typewise",
                                 "channel_type_id": "67bed9fe3b2f84a3a5e67779",
                             },
@@ -113,26 +114,37 @@ def process_agent_response(
 
     input_configs = get_input_configs()
 
-    async def run_supervisor_with_graph():
-        async with AsyncSqliteSaver.from_conn_string(
-            DB_CHECKPOINT_PATH
-        ) as saver:
-            graph = get_complete_graph(
+    # async def run_supervisor_with_graph():
+    #     async with AsyncSqliteSaver.from_conn_string(
+    #         DB_CHECKPOINT_PATH
+    #     ) as saver:
+    #         supervisor = get_complete_graph(
+    #             model,
+    #             input_configs,
+    #             memory=saver,
+    #             channel_type_id=request.channel_type_id,
+    #         )
+    #         config = {"configurable": {"thread_id": request.discussion_id}}
+    #
+    #         return await supervisor.arun_supervisor(initial_state, config)
+    #
+    # # Run the supervisor with proper State object
+    # response = asyncio.run(run_supervisor_with_graph())
+
+    def run_supervisor_with_graph():
+        with SqliteSaver.from_conn_string(DB_CHECKPOINT_PATH) as saver:
+            supervisor = get_complete_graph(
                 model,
                 input_configs,
                 memory=saver,
                 channel_type_id=request.channel_type_id,
             )
-            # Your code here
-            compiled_supervisor = graph.get_supervisor_compiled_graph()
             config = {"configurable": {"thread_id": request.discussion_id}}
 
-            return await run_supervisor(
-                initial_state, compiled_supervisor, config
-            )
+            return supervisor.run_supervisor(initial_state, config)
 
     # Run the supervisor with proper State object
-    response = asyncio.run(run_supervisor_with_graph())
+    response = run_supervisor_with_graph()
 
     if response and "messages" in response and response["messages"]:
         # Get the last message
