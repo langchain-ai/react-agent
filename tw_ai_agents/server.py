@@ -11,6 +11,7 @@ from langgraph.checkpoint.sqlite import SqliteSaver
 from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
 from langgraph.types import Command
 
+from tw_ai_agents.agents.llm_models_loader import load_chat_model
 from tw_ai_agents.instruction_optimizer.instruction_optimizer import (
     InstructionOptimizationRequest,
     InstructionOptimizationResponse,
@@ -21,7 +22,6 @@ from tw_ai_agents.agents.graph_creator import (
     get_input_configs,
 )
 import time
-from tw_ai_agents.agents.utils import load_chat_model
 from tw_ai_agents.config_handler.constants import DB_CHECKPOINT_PATH
 from tw_ai_agents.config_handler.pydantic_models.agent_models import (
     AgentResponseRequest,

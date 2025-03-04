@@ -47,7 +47,7 @@ def load_chat_model(model_name: str, **kwargs: Any) -> BaseChatModel:
         return ChatOpenAI(
             model=model,
             api_key=api_key,
-            temperature=kwargs.get("temperature", 0.7),
+            temperature=kwargs.get("temperature", 0.0),
             max_tokens=kwargs.get("max_tokens", 1000),
         )
     else:

@@ -9,3 +9,9 @@ class State(MessagesState):
     next: str
     remaining_steps: int
     metadata: Dict[str, Any]
+
+
+class SubagentState(State):
+    """State for the agent system, extending MessagesState with metadata for tool tracking."""
+
+    message_for_subagent: str

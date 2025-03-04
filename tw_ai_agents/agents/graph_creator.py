@@ -13,14 +13,19 @@ from langchain_core.messages import HumanMessage
 from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
 
 from tw_ai_agents.agents.handoff import _normalize_agent_name
-from tw_ai_agents.agents.message_types.base_message_type import State
+from tw_ai_agents.agents.llm_models_loader import load_chat_model
+from tw_ai_agents.agents.message_types.base_message_type import (
+    State,
+    SubagentState,
+)
 from tw_ai_agents.agents.tw_supervisor import TWSupervisor
-from tw_ai_agents.agents.utils import load_chat_model
 from tw_ai_agents.agents.tools.actions_retriever import AGENT_LIST
 from tw_ai_agents.agents.tools.tools import (
     get_knowledge_info,
-    handoff_conversation_to_real_agent,
+)
+from tw_ai_agents.agents.tools.human_tools import (
     real_human_agent_execute_actions,
+    handoff_conversation_to_real_agent,
 )
 
 # Load environment variables
@@ -60,8 +65,7 @@ def get_complete_graph(
         action_list = instructions_with_tools["actions"]
         agent_list_as_tools = []
         for action in action_list:
-            agent = AGENT_LIST[action["id"]]
-            new_agent = agent()
+            new_agent = AGENT_LIST[action["id"]]()
             agent_list_as_tools.append(
                 TWSupervisor(
                     agents=[],
@@ -84,7 +88,7 @@ def get_complete_graph(
                 tools=shared_tools,
                 model=model,
                 prompt=agent_prompt,
-                state_schema=State,
+                state_schema=SubagentState,
                 supervisor_name=name,
                 description=description,
                 # handoff_conditions=handoff_conditions,
@@ -129,6 +133,7 @@ def get_complete_graph(
         description="Agent able to handle the flow of the conversation.",
         memory=memory,
         tools=[handoff_conversation_to_real_agent],
+        end_agent=None,
     )
 
     return supervisor_system

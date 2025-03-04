@@ -1,21 +1,23 @@
 import inspect
 import sqlite3
-from typing import Callable, Dict, List, Optional, Union
+from typing import Callable, Dict, List, Optional, Union, Tuple
 
 from langchain.prompts import Prompt
 from langchain_core.language_models import LanguageModelLike
 from langchain_core.messages import AIMessage
 from langchain_core.tools import BaseTool
 from langgraph.checkpoint.sqlite import SqliteSaver
+from langgraph.constants import END
 from langgraph.graph import START, StateGraph
 from langgraph.graph.state import CompiledStateGraph
 from langgraph.prebuilt import ToolNode, create_react_agent
 from langgraph.prebuilt.chat_agent_executor import AgentState, StateSchemaType
 
 from tw_ai_agents.agents.handoff import (
-    create_handoff_tool,
     OutputMode,
     _make_call_agent,
+    create_handoff_tool,
+    SUBAGENT_TOOL_NAME_PREFIX,
 )
 from tw_ai_agents.agents.message_types.base_message_type import State
 
@@ -32,6 +34,7 @@ class TWSupervisor:
         memory=None,
         tools: Optional[List[Union[Callable, BaseTool]]] = None,
         prompt: Optional[Prompt] = None,
+        end_agent: Optional[Union[CompiledStateGraph, "TWSupervisor"]] = None,
         state_schema: StateSchemaType = AgentState,
         output_mode: OutputMode = "last_message",
         add_handoff_back_messages: bool = False,
@@ -62,6 +65,7 @@ class TWSupervisor:
         self.compiled_graph = None
         self.description = description
         self.memory = memory
+        self.end_agent = end_agent
 
     def _process_agent(self, agent):
         """Process an agent which could be a CompiledStateGraph or another TWSupervisor."""
@@ -127,14 +131,38 @@ class TWSupervisor:
         )
 
         builder = StateGraph(self.state_schema)
-        builder.add_node(supervisor_agent, destinations=tuple(agent_names))
+
+        # Add end_agent if it exists - do this first to set up proper routing
+        if self.end_agent is not None:
+            processed_end_agent = self._process_agent(self.end_agent)
+            # Add the end agent node with no handoff back and ability to go to END
+            builder.add_node(
+                processed_end_agent.name,
+                _make_call_agent(
+                    processed_end_agent,
+                    add_handoff_back_messages=False,
+                    supervisor_name=self.supervisor_name,
+                ),
+                # Explicitly allow end_agent to go to END
+                destinations=tuple(END),
+            )
+            # Supervisor can only go to other agents or end_agent (no direct END)
+            destinations: Tuple[str] = tuple(
+                list(agent_names) + [processed_end_agent.name]
+            )
+            builder.add_node(supervisor_agent, destinations=destinations)
+        else:
+            # If no end_agent, supervisor can only go to other agents
+            builder.add_node(supervisor_agent, destinations=tuple(agent_names))
+
         builder.add_edge(START, supervisor_agent.name)
+
+        # Add all other agents - they can only go back to supervisor
         for agent, description in processed_agents:
             builder.add_node(
                 agent.name,
                 _make_call_agent(
                     agent,
-                    self.output_mode,
                     self.add_handoff_back_messages,
                     self.supervisor_name,
                 ),
@@ -200,17 +228,24 @@ class TWSupervisor:
             ):
                 if "tool_calls" in message.additional_kwargs:
                     for tool_call in message.additional_kwargs["tool_calls"]:
-                        tool_calls.append(
-                            {
-                                "tool_name": tool_call.get("function", {}).get(
-                                    "name", "unknown"
-                                ),
-                                "tool_input": tool_call.get("function", {}).get(
-                                    "arguments", "{}"
-                                ),
-                                "tool_id": tool_call.get("id", "unknown"),
-                            }
-                        )
+                        # Filter out our sub-agents from the tool call list.
+                        # The ones whose name starts with SUBAGENT_TOOL_NAME_PREFIX
+                        if (
+                            not tool_call.get("function", {})
+                            .get("name", "")
+                            .starts_with(SUBAGENT_TOOL_NAME_PREFIX)
+                        ):
+                            tool_calls.append(
+                                {
+                                    "tool_name": tool_call.get(
+                                        "function", {}
+                                    ).get("name", "unknown"),
+                                    "tool_input": tool_call.get(
+                                        "function", {}
+                                    ).get("arguments", "{}"),
+                                    "tool_id": tool_call.get("id", "unknown"),
+                                }
+                            )
         return tool_calls
 
     def run_supervisor(self, state: State, config) -> Dict:
