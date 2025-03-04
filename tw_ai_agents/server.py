@@ -133,12 +133,14 @@ def process_agent_response(
 
     def run_supervisor_with_graph():
         with SqliteSaver.from_conn_string(DB_CHECKPOINT_PATH) as saver:
+            start_time = time.time()
             supervisor = get_complete_graph(
                 model,
                 input_configs,
                 memory=saver,
                 channel_type_id=request.channel_type_id,
             )
+            print(f"Graph creation time: {time.time() - start_time}")
             config = {"configurable": {"thread_id": request.discussion_id}}
 
             return supervisor.run_supervisor(initial_state, config)

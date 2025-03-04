@@ -19,7 +19,10 @@ from tw_ai_agents.agents.handoff import (
     create_handoff_tool,
     SUBAGENT_TOOL_NAME_PREFIX,
 )
-from tw_ai_agents.agents.message_types.base_message_type import State
+from tw_ai_agents.agents.message_types.base_message_type import (
+    State,
+    ToolMessageInfo,
+)
 
 conn = sqlite3.connect("checkpoints.sqlite")
 memory = SqliteSaver(conn)
@@ -203,49 +206,49 @@ class TWSupervisor:
             result["metadata"].update(metadata)
         else:
             for key, values in chunk.items():
+                # we always want the last
                 if isinstance(values, list):
                     for value in values:
                         result["messages"].extend(value.get("messages", []))
+                        result["tools_called"].extend(
+                            value.get("tools_called", [])
+                        )
                         result["metadata"].update(value.get("metadata", {}))
                 else:
                     result["messages"].extend(values.get("messages", []))
+                    result["tools_called"].extend(
+                        values.get("tools_called", [])
+                    )
                     result["metadata"].update(values.get("metadata", {}))
         return result
 
-    def _extract_tool_calls(self, messages):
-        """Extract tool calls from a list of messages.
+    def _extract_tool_calls(
+        self, tool_message_infos: List[ToolMessageInfo]
+    ) -> List[Dict]:
+        """Extract tool calls from a list of ToolMessageInfo objects.
 
-        :params
-            messages: List of messages to process
-        :return
-            List of extracted tool calls
+        :params tool_message_infos: List of ToolMessageInfo objects
+        :return List of dictionaries containing tool call information
         """
         tool_calls = []
-        for message in messages:
+        for tool_message_info in tool_message_infos:
+            a = 1
+            # Filter out our sub-agents from the tool call list.
+            # The ones whose name starts with SUBAGENT_TOOL_NAME_PREFIX
             if (
-                hasattr(message, "additional_kwargs")
-                and message.additional_kwargs
+                tool_message_info.name is not None
+                and not tool_message_info.name.startswith(
+                    SUBAGENT_TOOL_NAME_PREFIX
+                )
             ):
-                if "tool_calls" in message.additional_kwargs:
-                    for tool_call in message.additional_kwargs["tool_calls"]:
-                        # Filter out our sub-agents from the tool call list.
-                        # The ones whose name starts with SUBAGENT_TOOL_NAME_PREFIX
-                        if (
-                            not tool_call.get("function", {})
-                            .get("name", "")
-                            .startswith(SUBAGENT_TOOL_NAME_PREFIX)
-                        ):
-                            tool_calls.append(
-                                {
-                                    "tool_name": tool_call.get(
-                                        "function", {}
-                                    ).get("name", "unknown"),
-                                    "tool_input": tool_call.get(
-                                        "function", {}
-                                    ).get("arguments", "{}"),
-                                    "tool_id": tool_call.get("id", "unknown"),
-                                }
-                            )
+                a = 1
+                tool_calls.append(
+                    {
+                        "tool_name": tool_message_info.name,
+                        "tool_input": tool_message_info.parameters,
+                        "tool_id": tool_message_info.tool_call_id,
+                    }
+                )
         return tool_calls
 
     def run_supervisor(self, state: State, config) -> Dict:
@@ -258,16 +261,17 @@ class TWSupervisor:
             The updated state with results and metadata about the execution
         """
         graph = self.get_supervisor_compiled_graph()
-        result = {"messages": [], "metadata": {"tool_calls": []}}
 
         for chunk in graph.stream(state, config=config):
+            # We only want the latest result
+            result = {"messages": [], "metadata": {}, "tools_called": []}
             result = self._process_output_chunk(chunk, result)
 
         if "metadata" not in result:
             result["metadata"] = {}
 
         result["metadata"]["tool_calls"] = self._extract_tool_calls(
-            result["messages"]
+            result["tools_called"]
         )
         return result
 
@@ -281,9 +285,9 @@ class TWSupervisor:
             The updated state with results and metadata about the execution
         """
         graph = self.get_supervisor_compiled_graph()
-        result = {"messages": [], "metadata": {"tool_calls": []}}
 
         async for chunk in graph.astream(state, config=config):
+            result = {"messages": [], "metadata": {}, "tools_called": []}
             result = self._process_output_chunk(chunk, result)
 
         if "metadata" not in result:

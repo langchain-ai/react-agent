@@ -22,6 +22,8 @@ from langgraph.utils.runnable import RunnableCallable
 from pydantic import BaseModel
 from typing_extensions import Annotated
 
+from tw_ai_agents.agents.message_types.base_message_type import ToolMessageInfo
+
 WHITESPACE_RE = re.compile(r"\s+")
 SUBAGENT_TOOL_NAME_PREFIX = f"transfer_to_"
 SUBAGENT_TOOL_NAME_SUFFIX = "_agent"
@@ -132,7 +134,7 @@ def _make_call_agent(
 
     def _process_output(
         output: Dict, old_messages: Optional[Dict] = None
-    ) -> Dict:
+    ) -> agent.output_schema:
         all_messages = old_messages + output["messages"]
 
         if add_handoff_back_messages:
@@ -148,7 +150,6 @@ def _make_call_agent(
         # Replace the content of the tool message with the reply from the subagent
 
         # Find the last ToolMessage that comes before the last HumanMessage
-        last_human_idx = None
         last_tool_idx = None
 
         # Iterate in reverse to find the first HumanMessage and check if the previous one is a ToolMessage
@@ -160,16 +161,44 @@ def _make_call_agent(
 
         if last_tool_idx is not None:
             # Update the content of that ToolMessage with the final AI response
-            all_messages[last_tool_idx].content = f"{all_messages[-1].content}"
+            new_tools_called = []
+            for idx in range(last_tool_idx, len(all_messages)):
+                message = all_messages[idx]
+                if isinstance(message, ToolMessage):
+                    # get the previous ai message, if available. It contains the params of the tool call
+                    previous_ai_message = (
+                        all_messages[idx - 1] if idx > 0 else None
+                    )
+                    parameters = (
+                        previous_ai_message.tool_calls[0].get("args", {})
+                        if previous_ai_message
+                        else {}
+                    )
+
+                    new_tools_called.append(
+                        ToolMessageInfo(
+                            content=message.content,
+                            name=message.name,
+                            tool_call_id=message.tool_call_id,
+                            id=message.id,
+                            parameters=parameters,
+                        )
+                    )
+            to_return_message = all_messages[last_tool_idx]
+            to_return_message.content = f"{all_messages[-1].content}"
 
             return {
                 **output,
-                "messages": all_messages[last_tool_idx],
+                "messages": to_return_message,
+                # we add new tools before because this code is called when going back up on the graph.
+                "tools_called": new_tools_called + output["tools_called"],
             }
 
         raise ValueError("Could not find appropriate ToolMessage to update")
 
-    def _process_input(input: Dict) -> Tuple[Dict, Optional[List[BaseMessage]]]:
+    def _process_input(
+        input: Dict,
+    ) -> Tuple[agent.input_schema, Optional[List[BaseMessage]]]:
         # return on the last ToolMessage, convert it to a HumanMessage
         last_message = input["messages"][-1]
         other_messages = input["messages"]
