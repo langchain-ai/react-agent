@@ -1,7 +1,7 @@
 {
   "dependencies": ["."],
   "graphs": {
-    "tw_supervisor": "./tw_ai_agents/agents/tw_supervisor.py:compiled_supervisor"
+    "tw_supervisor": "./tw_ai_agents/testing_things.py:full_compiled_graph"
   },
   "env": ".env"
 }

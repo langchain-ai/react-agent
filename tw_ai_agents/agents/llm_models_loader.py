@@ -3,13 +3,16 @@
 This module provides utility functions for the react agent, such as loading chat models.
 """
 
+import os
 from functools import lru_cache
 from typing import Any
-from langchain_core.language_models import BaseChatModel
-from langchain_core.messages import BaseMessage
-import os
+
 from dotenv import load_dotenv
+from langchain_core.globals import set_llm_cache
+from langchain_core.language_models import BaseChatModel
 from langchain_openai import ChatOpenAI
+
+from langchain_community.cache import SQLiteCache
 
 # Load environment variables
 load_dotenv()
@@ -45,12 +48,17 @@ def load_chat_model(model_name: str, **kwargs: Any) -> BaseChatModel:
             raise ValueError("OPENAI_API_KEY environment variable not set")
 
         # Create OpenAI chat model
-        return ChatOpenAI(
+        model = ChatOpenAI(
             model=model,
             api_key=api_key,
             temperature=kwargs.get("temperature", 0.0),
             max_tokens=kwargs.get("max_tokens", 1000),
         )
+
+        # To be changed to redis cache
+        set_llm_cache(SQLiteCache(database_path=".langchain.db"))
+
+        return model
     else:
         raise ValueError(f"Unsupported model provider: {provider}")
 
