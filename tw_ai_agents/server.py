@@ -90,10 +90,6 @@ def process_agent_response(
     Raises:
         HTTPException: If there's an error processing the message.
     """
-    # try:
-    # print request to log
-    print(f"Input request: {request}")
-
     # Create the initial state with message
     message = HumanMessage(content=request.message_text)
 
@@ -181,11 +177,6 @@ def process_agent_response(
                 "discussion_id": request.discussion_id,
             },
         )
-
-    # except Exception as e:
-    #     raise HTTPException(
-    #         status_code=500, detail=f"Error processing agent response: {str(e)}"
-    #     )
 
 
 @app.post(
