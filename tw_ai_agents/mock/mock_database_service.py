@@ -2,9 +2,11 @@ import os
 import sqlite3
 from typing import Any, Dict, List, Optional, Tuple
 
+from tw_ai_agents.config_handler.absolute_dirs import get_mock_db_folder
+
 
 class MockDatabaseService:
-    def __init__(self, db_path: str = 'mock/data/erp_info.db'):
+    def __init__(self, db_path: str = get_mock_db_folder() / "erp_info.db"):
         self.db_path = db_path
 
     def _get_connection(self):
@@ -25,7 +27,8 @@ class MockDatabaseService:
         cursor = conn.cursor()
 
         cursor.execute(
-            "SELECT address FROM customers WHERE email_id = ?", (email_id,))
+            "SELECT address FROM customers WHERE email_id = ?", (email_id,)
+        )
         result = cursor.fetchone()
 
         conn.close()
@@ -45,7 +48,8 @@ class MockDatabaseService:
         cursor = conn.cursor()
 
         cursor.execute(
-            "SELECT document_id FROM customers WHERE email_id = ?", (email_id,))
+            "SELECT document_id FROM customers WHERE email_id = ?", (email_id,)
+        )
         result = cursor.fetchone()
 
         conn.close()
@@ -66,14 +70,18 @@ class MockDatabaseService:
         cursor = conn.cursor()
 
         cursor.execute(
-            "UPDATE customers SET address = ? WHERE email_id = ?", (new_address, email_id))
+            "UPDATE customers SET address = ? WHERE email_id = ?",
+            (new_address, email_id),
+        )
         success = cursor.rowcount > 0
 
         conn.commit()
         conn.close()
         return success
 
-    def update_customer_document_id(self, email_id: str, document_id: str) -> bool:
+    def update_customer_document_id(
+        self, email_id: str, document_id: str
+    ) -> bool:
         """
         Update the document ID of a customer by their email ID.
 
@@ -88,7 +96,9 @@ class MockDatabaseService:
         cursor = conn.cursor()
 
         cursor.execute(
-            "UPDATE customers SET document_id = ? WHERE email_id = ?", (document_id, email_id))
+            "UPDATE customers SET document_id = ? WHERE email_id = ?",
+            (document_id, email_id),
+        )
         success = cursor.rowcount > 0
 
         conn.commit()

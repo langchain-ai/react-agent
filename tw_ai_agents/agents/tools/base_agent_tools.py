@@ -1,8 +1,8 @@
 from abc import abstractmethod
 
-from langchain_openai import ChatOpenAI
+from tw_ai_agents.agents.llm_models_loader import get_llm_model
 
-llm = ChatOpenAI(model="gpt-4o")
+llm = get_llm_model()
 
 
 class BaseAgentWithTools:

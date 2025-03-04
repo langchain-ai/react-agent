@@ -13,7 +13,7 @@ from langchain_core.messages import HumanMessage
 from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
 
 from tw_ai_agents.agents.handoff import _normalize_agent_name
-from tw_ai_agents.agents.llm_models_loader import load_chat_model
+from tw_ai_agents.agents.llm_models_loader import load_chat_model, get_llm_model
 from tw_ai_agents.agents.message_types.base_message_type import (
     State,
     SubagentState,
@@ -158,8 +158,7 @@ def get_input_configs() -> Dict[str, Any]:
 
 if __name__ == "__main__":
     # Run the test
-    model_name: str = "openai/gpt-4o"
-    model = load_chat_model(model_name)
+    model = get_llm_model()
 
     messages = [
         HumanMessage(

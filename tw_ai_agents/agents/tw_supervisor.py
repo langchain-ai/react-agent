@@ -233,7 +233,7 @@ class TWSupervisor:
                         if (
                             not tool_call.get("function", {})
                             .get("name", "")
-                            .starts_with(SUBAGENT_TOOL_NAME_PREFIX)
+                            .startswith(SUBAGENT_TOOL_NAME_PREFIX)
                         ):
                             tool_calls.append(
                                 {

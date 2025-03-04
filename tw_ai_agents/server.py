@@ -11,7 +11,7 @@ from langgraph.checkpoint.sqlite import SqliteSaver
 from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
 from langgraph.types import Command
 
-from tw_ai_agents.agents.llm_models_loader import load_chat_model
+from tw_ai_agents.agents.llm_models_loader import load_chat_model, get_llm_model
 from tw_ai_agents.instruction_optimizer.instruction_optimizer import (
     InstructionOptimizationRequest,
     InstructionOptimizationResponse,
@@ -38,7 +38,7 @@ PORT = int(os.getenv("PORT", "8000"))
 app = FastAPI()
 
 model_name: str = "openai/gpt-4o"
-model = load_chat_model(model_name)
+model = get_llm_model(model_name)
 
 
 @app.post(

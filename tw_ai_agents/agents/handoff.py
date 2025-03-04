@@ -5,23 +5,22 @@ This module provides tools for transferring control between agents in a multi-ag
 
 import re
 import uuid
-from typing import Literal, Callable, Dict, Optional, Tuple, List
+from typing import Callable, Dict, List, Literal, Optional, Tuple
 
 from langchain_core.messages import (
     AIMessage,
-    ToolMessage,
-    ToolCall,
     BaseMessage,
     HumanMessage,
+    ToolCall,
+    ToolMessage,
 )
-from langchain_core.tools import tool, BaseTool
+from langchain_core.tools import BaseTool, tool
 from langchain_core.tools.base import InjectedToolCallId
 from langgraph.graph.state import CompiledStateGraph
 from langgraph.types import Command
 from langgraph.utils.runnable import RunnableCallable
 from pydantic import BaseModel
 from typing_extensions import Annotated
-
 
 WHITESPACE_RE = re.compile(r"\s+")
 SUBAGENT_TOOL_NAME_PREFIX = f"transfer_to_"
@@ -147,13 +146,28 @@ def _make_call_agent(
         # 2. the HumanMessage we generate in process_input
         # 3. the AI Message generated as response from the Tool/Sub-agent
         # Replace the content of the tool message with the reply from the subagent
-        last_tool_message = all_messages[-3]
-        last_tool_message.content = f"{all_messages[-1].content}"
 
-        return {
-            **output,
-            "messages": last_tool_message,
-        }
+        # Find the last ToolMessage that comes before the last HumanMessage
+        last_human_idx = None
+        last_tool_idx = None
+
+        # Iterate in reverse to find the first HumanMessage and check if the previous one is a ToolMessage
+        for i in range(len(all_messages) - 1, 0, -1):
+            if isinstance(all_messages[i], HumanMessage):
+                if isinstance(all_messages[i - 1], ToolMessage):
+                    last_tool_idx = i - 1
+                break
+
+        if last_tool_idx is not None:
+            # Update the content of that ToolMessage with the final AI response
+            all_messages[last_tool_idx].content = f"{all_messages[-1].content}"
+
+            return {
+                **output,
+                "messages": all_messages[last_tool_idx],
+            }
+
+        raise ValueError("Could not find appropriate ToolMessage to update")
 
     def _process_input(input: Dict) -> Tuple[Dict, Optional[List[BaseMessage]]]:
         # return on the last ToolMessage, convert it to a HumanMessage

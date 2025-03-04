@@ -1,10 +1,11 @@
 from typing import Dict, List, Any
-from langchain_core.tools import tool
-from langchain_openai import ChatOpenAI
 
+from langchain_core.tools import tool
+
+from tw_ai_agents.agents.llm_models_loader import get_llm_model
 from tw_ai_agents.agents.tools.base_agent_tools import BaseAgentWithTools
 
-llm = ChatOpenAI(model="gpt-4o")
+llm = get_llm_model()
 
 
 class DPDAgentTools(BaseAgentWithTools):

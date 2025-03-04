@@ -3,6 +3,7 @@
 This module provides utility functions for the react agent, such as loading chat models.
 """
 
+from functools import lru_cache
 from typing import Any
 from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import BaseMessage
@@ -52,3 +53,8 @@ def load_chat_model(model_name: str, **kwargs: Any) -> BaseChatModel:
         )
     else:
         raise ValueError(f"Unsupported model provider: {provider}")
+
+
+@lru_cache(maxsize=3)
+def get_llm_model(model_name: str = "openai/gpt-4o") -> BaseChatModel:
+    return load_chat_model(model_name)

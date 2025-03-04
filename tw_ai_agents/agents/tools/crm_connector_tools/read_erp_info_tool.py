@@ -1,10 +1,10 @@
 from langchain_core.tools import tool
-from langchain_openai import ChatOpenAI
 
-from mock.mock_database_service import MockDatabaseService
+from tw_ai_agents.agents.llm_models_loader import get_llm_model
 from tw_ai_agents.agents.tools.base_agent_tools import BaseAgentWithTools
+from tw_ai_agents.mock.mock_database_service import MockDatabaseService
 
-llm = ChatOpenAI(model="gpt-4o")
+llm = get_llm_model()
 
 
 class ReadERPInfoTool(BaseAgentWithTools):
