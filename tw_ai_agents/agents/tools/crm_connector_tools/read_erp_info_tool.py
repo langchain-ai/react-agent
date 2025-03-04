@@ -12,6 +12,7 @@ class ReadERPInfoTool(BaseAgentWithTools):
         node_name = "read_erp_info"
         base_system_prompt = """You are a helpful assistant that can use tools to read information from the ERP system.
         Your goal is retrieve information from the ERP system and update it with new information.
+        If you can't find the requested information using the tools, ask to the Human Agent through the real_human_agent_execute_actions tool.
         """
         description = "You are a helpful assistant that can use tools to read information from the ERP system."
         # base_system_prompt = hub.pull(
@@ -30,14 +31,16 @@ class ReadERPInfoTool(BaseAgentWithTools):
             description=description,
         )
 
-    @tool
+    @tool(parse_docstring=True)
     @staticmethod
     def read_address(email_id: str):
-        """
-        Tool to read the address of a customer, given their email ID.
-        :params:
-            email_id: The email ID of the customer to read the address for
-        :return: The address of the customer
+        """Tool to read the address of a customer, given their email ID.
+
+        Args:
+            email_id: The email ID of the customer to read the address for.
+
+        Returns:
+            The address of the customer.
         """
         db_service = MockDatabaseService()
         address = db_service.get_customer_address(email_id)
@@ -45,14 +48,16 @@ class ReadERPInfoTool(BaseAgentWithTools):
             return address
         return f"No address found for customer {email_id}"
 
-    @tool
+    @tool(parse_docstring=True)
     @staticmethod
     def read_document_id(email_id: str):
-        """
-        Tool to read the document ID of a customer, given their email ID.
-        :params:
-            email_id: The email ID of the customer to read the document ID for
-        :return: The document ID of the customer
+        """Tool to read the document ID of a customer, given their email ID.
+
+        Args:
+            email_id: The email ID of the customer to read the document ID for.
+
+        Returns:
+            The document ID of the customer.
         """
         db_service = MockDatabaseService()
         document_id = db_service.get_customer_document_id(email_id)
