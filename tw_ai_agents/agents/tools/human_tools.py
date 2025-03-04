@@ -1,6 +1,8 @@
 from langchain_core.tools import tool
 from langgraph.types import interrupt
 
+COMPLETE_HANDOFF_STRING = "Handoff the full conversation to a real agent."
+
 
 @tool("real_human_agent_execute_actions")
 def real_human_agent_execute_actions(query: str) -> str:
@@ -33,6 +35,6 @@ def handoff_conversation_to_real_agent() -> str:
     answer = interrupt(
         # This value will be sent to the client
         # as part of the interrupt information.
-        "Handoff the full conversation to a real agent.",
+        COMPLETE_HANDOFF_STRING,
     )
     return answer

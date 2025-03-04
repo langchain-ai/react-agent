@@ -23,6 +23,7 @@ from tw_ai_agents.agents.message_types.base_message_type import (
     State,
     ToolMessageInfo,
 )
+from tw_ai_agents.agents.tools.human_tools import COMPLETE_HANDOFF_STRING
 
 conn = sqlite3.connect("checkpoints.sqlite")
 memory = SqliteSaver(conn)
@@ -201,6 +202,8 @@ class TWSupervisor:
             metadata = {
                 "ns": chunk["__interrupt__"][0].ns,
                 "target_entity": "agent",
+                "complete_handoff": COMPLETE_HANDOFF_STRING
+                == new_message.content,
             }
             result["messages"].append(new_message)
             result["metadata"].update(metadata)
