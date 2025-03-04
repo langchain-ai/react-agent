@@ -91,6 +91,9 @@ def process_agent_response(
         HTTPException: If there's an error processing the message.
     """
     # try:
+    # print request to log
+    print(f"Input request: {request}")
+
     # Create the initial state with message
     message = HumanMessage(content=request.message_text)
 

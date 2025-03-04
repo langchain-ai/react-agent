@@ -232,6 +232,10 @@ class TWSupervisor:
         """
         tool_calls = []
         for tool_message_info in tool_message_infos:
+            if not isinstance(tool_message_info, ToolMessageInfo):
+                raise ValueError(
+                    f"Expected ToolMessageInfo object, got {type(tool_message_info)}"
+                )
             a = 1
             # Filter out our sub-agents from the tool call list.
             # The ones whose name starts with SUBAGENT_TOOL_NAME_PREFIX
