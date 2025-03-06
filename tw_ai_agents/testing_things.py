@@ -1,13 +1,10 @@
 import time
 
-from langgraph.checkpoint.sqlite import SqliteSaver
-
 from tw_ai_agents.agents.graph_creator import (
     get_complete_graph,
     get_input_configs,
 )
 from tw_ai_agents.agents.llm_models_loader import get_llm_model
-from tw_ai_agents.config_handler.constants import DB_CHECKPOINT_PATH
 from tw_ai_agents.config_handler.pydantic_models.agent_models import (
     AgentResponseRequest,
 )
@@ -26,6 +23,7 @@ supervisor = get_complete_graph(
     channel_type_id="67bed9fe3b2f84a3a5e67779",
 )
 full_compiled_graph = supervisor.get_supervisor_compiled_graph()
+# full_compiled_graph.get_graph().draw_mermaid_png(output_file_path="graph.png")
 
 
 def main():
@@ -33,7 +31,17 @@ def main():
     input_data = AgentResponseRequest(
         message_type="user",
         # message_text="Typewise sucks.",
-        message_text="Hey. All good? I'd like that you get from the ERP the information about my phone number. My email is f.roberts@gmail.com",
+        message_text="Hello!",
+        discussion_id=discussion_id,
+        client="typewise",
+        channel_type_id="67bed9fe3b2f84a3a5e67779",
+    )
+    output = process_agent_response(input_data)
+    print(output)
+    input_data = AgentResponseRequest(
+        message_type="user",
+        # message_text="Typewise sucks.",
+        message_text="Hey. All good? I'd like that to update my address information in my account.",
         discussion_id=discussion_id,
         client="typewise",
         channel_type_id="67bed9fe3b2f84a3a5e67779",
@@ -43,13 +51,26 @@ def main():
 
     second_input_data = AgentResponseRequest(
         message_type="agent",
-        message_text="His phone number is 340-9556810.",
+        # message_type="user",
+        message_text="My email is f.roberts@gmail.com",
         discussion_id=discussion_id,
         client="typewise",
         channel_type_id="67bed9fe3b2f84a3a5e67779",
     )
     second_output = process_agent_response(second_input_data)
     print(second_output)
+
+    third_input_data = AgentResponseRequest(
+        message_type="agent",
+        # message_type="user",
+        message_text="Please update to Bohstrasse 322, Bern, Switzerland.",
+        discussion_id=discussion_id,
+        client="typewise",
+        channel_type_id="67bed9fe3b2f84a3a5e67779",
+    )
+    third_output = process_agent_response(third_input_data)
+    print(third_output)
+
     a = 1
 
 

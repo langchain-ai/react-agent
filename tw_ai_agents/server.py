@@ -142,6 +142,27 @@ def process_agent_response(
             print(f"Graph creation time: {time.time() - start_time}")
             config = {"configurable": {"thread_id": request.discussion_id}}
 
+            next_state = (
+                supervisor.get_supervisor_compiled_graph()
+                .get_state(config)
+                .next
+            )
+            if message_type == "agent" or next_state:
+                # either from agent or the graph is in an interrupt state
+                initial_state = Command(
+                    resume=request.message_text,
+                )
+            elif message_type == "user":
+                initial_state = {
+                    "messages": [message],
+                    "metadata": {"discussion_id": request.discussion_id},
+                    "remaining_steps": 10,
+                }
+            else:
+                raise ValueError(
+                    "Invalid message type. Please use 'user' or 'agent'."
+                )
+
             return supervisor.run_supervisor(initial_state, config)
 
     # Run the supervisor with proper State object

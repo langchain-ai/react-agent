@@ -13,10 +13,9 @@ from langchain_core.messages import HumanMessage
 from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
 
 from tw_ai_agents.agents.handoff import _normalize_agent_name
-from tw_ai_agents.agents.llm_models_loader import load_chat_model, get_llm_model
+from tw_ai_agents.agents.llm_models_loader import get_llm_model
 from tw_ai_agents.agents.message_types.base_message_type import (
     State,
-    SubagentState,
 )
 from tw_ai_agents.agents.tw_supervisor import TWSupervisor
 from tw_ai_agents.agents.tools.actions_retriever import AGENT_LIST
@@ -26,6 +25,7 @@ from tw_ai_agents.agents.tools.tools import (
 from tw_ai_agents.agents.tools.human_tools import (
     real_human_agent_execute_actions,
     handoff_conversation_to_real_agent,
+    AskUserTool,
 )
 
 # Load environment variables
@@ -36,7 +36,26 @@ def get_complete_graph(
     model, configs: dict, memory, channel_type_id: str
 ) -> TWSupervisor:
     """Test the orchestrator system with a simple query."""
+    # Load channel configs
+    correct_channel = next(
+        (
+            channel
+            for channel in configs["channels"]
+            if channel["channelTypeId"] == channel_type_id
+        ),
+        None,
+    )
+    if correct_channel is None:
+        raise ValueError("Channel type not found in the configuration data.")
+    channel_type = correct_channel["channelType"]["name"]
+    channel_rules = correct_channel["instructions"]["text"]
+    writer_function_input = {
+        "channel_type": channel_type,
+        "channel_rules": channel_rules,
+    }
+    ask_user_node = AskUserTool(writer_function_input)
 
+    # Load share tools
     supervisor_tools = []
     subagents_list = []
     shared_agents = [
@@ -52,6 +71,7 @@ def get_complete_graph(
             memory=memory,
         ),
     ]
+
     shared_tools = [
         handoff_conversation_to_real_agent,
         real_human_agent_execute_actions,
@@ -75,6 +95,7 @@ def get_complete_graph(
                     state_schema=State,
                     supervisor_name=f"{name}_{new_agent.node_name}",
                     description=new_agent.description,
+                    dependant_agents=[ask_user_node],
                 )
             )
 
@@ -88,28 +109,15 @@ def get_complete_graph(
                 tools=shared_tools,
                 model=model,
                 prompt=agent_prompt,
-                state_schema=SubagentState,
+                state_schema=State,
                 supervisor_name=name,
                 description=description,
-                # handoff_conditions=handoff_conditions,
                 memory=memory,
+                dependant_agents=[ask_user_node],
             )
         )
 
     # Main Supervisor
-    correct_channel = next(
-        (
-            channel
-            for channel in configs["channels"]
-            if channel["channelTypeId"] == channel_type_id
-        ),
-        None,
-    )
-    if correct_channel is None:
-        raise ValueError("Channel type not found in the configuration data.")
-    channel_type = correct_channel["channelType"]["name"]
-    channel_rules = correct_channel["instructions"]["text"]
-
     starting_supervisor_prompt = hub.pull("tw-supervisor-system-prompt")
     final_supervisor_prompt = starting_supervisor_prompt.format(
         agents="- "
@@ -133,7 +141,6 @@ def get_complete_graph(
         description="Agent able to handle the flow of the conversation.",
         memory=memory,
         tools=[handoff_conversation_to_real_agent],
-        end_agent=None,
     )
 
     return supervisor_system

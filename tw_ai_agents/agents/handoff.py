@@ -22,7 +22,10 @@ from langgraph.utils.runnable import RunnableCallable
 from pydantic import BaseModel
 from typing_extensions import Annotated
 
-from tw_ai_agents.agents.message_types.base_message_type import ToolMessageInfo
+from tw_ai_agents.agents.message_types.base_message_type import (
+    ToolMessageInfo,
+    State,
+)
 
 WHITESPACE_RE = re.compile(r"\s+")
 SUBAGENT_TOOL_NAME_PREFIX = f"transfer_to_"
@@ -83,7 +86,10 @@ def create_handoff_tool(
         return Command(
             goto=agent_name,
             graph=Command.PARENT,
-            update={"messages": [tool_message]},
+            update={
+                "messages": [tool_message],
+                "message_from_supervisor": [message_for_subagent],
+            },
         )
 
     return handoff_to_agent
@@ -187,24 +193,36 @@ def _make_call_agent(
             to_return_message = all_messages[last_tool_idx]
             to_return_message.content = f"{all_messages[-1].content}"
 
+            # Remove last message from supervisor, as it was used in the supervisor processing
+
             return {
                 **output,
                 "messages": to_return_message,
                 # we add new tools before because this code is called when going back up on the graph.
                 "tools_called": new_tools_called + output["tools_called"],
+                "message_from_supervisor": [None],
             }
 
         raise ValueError("Could not find appropriate ToolMessage to update")
 
     def _process_input(
-        input: Dict,
+        input: State,
     ) -> Tuple[agent.input_schema, Optional[List[BaseMessage]]]:
+        # add messages_to_from_user to the correct_input
+        messages_from_to_user = []
+        for message in input["messages"]:
+            if isinstance(message, HumanMessage) and getattr(
+                message, "from_user", True
+            ):
+                messages_from_to_user.append(message)
+        input.add_messages_to_from_user(messages_from_to_user)
+
         # return on the last ToolMessage, convert it to a HumanMessage
         last_message = input["messages"][-1]
         other_messages = input["messages"]
         # qua come content devo prendere il message from subagent
         if isinstance(last_message, ToolMessage):
-            last_message = HumanMessage(last_message.content)
+            last_message = HumanMessage(last_message.content, from_user=False)
         else:
             raise ValueError(
                 f"Expected last message to be a ToolMessage, got {type(last_message)}"
@@ -221,5 +239,46 @@ def _make_call_agent(
         state, old_messages = _process_input(state)
         output = await agent.ainvoke(state)
         return _process_output(output, old_messages)
+
+    return RunnableCallable(call_agent, acall_agent)
+
+
+def _make_call_dependant_agent(
+    agent: CompiledStateGraph,
+    add_handoff_back_messages: bool,
+    supervisor_name: str,
+) -> Callable[[Dict], Dict]:
+    """
+    Create a function that calls an agent and processes its output.
+    This function is what is actually executed when the handoff to a sub-agent happens.
+    Here is were we process messages going to and coming from sub-agents.
+
+    Args:
+        agent: The agent to call.
+        add_handoff_back_messages: Whether to add handoff back messages.
+        supervisor_name: The name of the supervisor agent.
+
+    Returns:
+        A callable that invokes the agent and processes its output.
+    """
+
+    def _process_output(output: Dict) -> Dict:
+        # remove last message_from_supervisor
+        return {**output, "message_from_supervisor": [None]}
+
+    def _process_input(
+        input: State,
+    ) -> State:
+        return input
+
+    def call_agent(state: Dict) -> Dict:
+        state = _process_input(state)
+        output = agent.invoke(state)
+        return _process_output(output)
+
+    async def acall_agent(state: Dict) -> Dict:
+        state = _process_input(state)
+        output = await agent.ainvoke(state)
+        return _process_output(output)
 
     return RunnableCallable(call_agent, acall_agent)

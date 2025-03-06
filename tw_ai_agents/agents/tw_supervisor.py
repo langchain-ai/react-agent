@@ -1,6 +1,6 @@
 import inspect
 import sqlite3
-from typing import Callable, Dict, List, Optional, Union, Tuple
+from typing import Callable, Dict, List, Optional, Union, Tuple, Any
 
 from langchain.prompts import Prompt
 from langchain_core.language_models import LanguageModelLike
@@ -18,10 +18,12 @@ from tw_ai_agents.agents.handoff import (
     _make_call_agent,
     create_handoff_tool,
     SUBAGENT_TOOL_NAME_PREFIX,
+    _make_call_dependant_agent,
 )
 from tw_ai_agents.agents.message_types.base_message_type import (
     State,
     ToolMessageInfo,
+    InterruptBaseModel,
 )
 from tw_ai_agents.agents.tools.human_tools import COMPLETE_HANDOFF_STRING
 
@@ -38,11 +40,11 @@ class TWSupervisor:
         memory=None,
         tools: Optional[List[Union[Callable, BaseTool]]] = None,
         prompt: Optional[Prompt] = None,
-        end_agent: Optional[Union[CompiledStateGraph, "TWSupervisor"]] = None,
         state_schema: StateSchemaType = AgentState,
         output_mode: OutputMode = "last_message",
         add_handoff_back_messages: bool = False,
         supervisor_name: str = "supervisor",
+        dependant_agents: Optional[List[Any]] = None,
     ):
         """
 
@@ -57,6 +59,7 @@ class TWSupervisor:
             add_handoff_back_messages: Whether to add a pair of (AIMessage, ToolMessage) to the message history
                 when returning control to the supervisor to indicate that a handoff has occurred.
             supervisor_name: Name of the supervisor node.
+            dependant_agents: List of agents which receive all messages and metadata from the supervisor.
         """
         self.agents = agents
         self.model = model
@@ -69,7 +72,7 @@ class TWSupervisor:
         self.compiled_graph = None
         self.description = description
         self.memory = memory
-        self.end_agent = end_agent
+        self.dependant_agents = dependant_agents
 
     def _process_agent(self, agent):
         """Process an agent which could be a CompiledStateGraph or another TWSupervisor."""
@@ -105,12 +108,18 @@ class TWSupervisor:
 
             agent_names.add(agent.name)
 
+        dependant_agents = (
+            [(agent, agent.description) for agent in self.dependant_agents]
+            if self.dependant_agents
+            else []
+        )
+
         handoff_tools = [
             create_handoff_tool(
                 agent_name=agent.name,
                 agent_description=description,
             )
-            for agent, description in processed_agents
+            for agent, description in processed_agents + dependant_agents
         ]
         all_tools = (self.tools or []) + handoff_tools
 
@@ -136,36 +145,34 @@ class TWSupervisor:
 
         builder = StateGraph(self.state_schema)
 
-        # Add end_agent if it exists - do this first to set up proper routing
-        if self.end_agent is not None:
-            processed_end_agent = self._process_agent(self.end_agent)
-            # Add the end agent node with no handoff back and ability to go to END
-            builder.add_node(
-                processed_end_agent.name,
-                _make_call_agent(
-                    processed_end_agent,
-                    add_handoff_back_messages=False,
-                    supervisor_name=self.supervisor_name,
-                ),
-                # Explicitly allow end_agent to go to END
-                destinations=tuple(END),
-            )
-            # Supervisor can only go to other agents or end_agent (no direct END)
-            destinations: Tuple[str] = tuple(
-                list(agent_names) + [processed_end_agent.name]
-            )
-            builder.add_node(supervisor_agent, destinations=destinations)
-        else:
-            # If no end_agent, supervisor can only go to other agents
-            builder.add_node(supervisor_agent, destinations=tuple(agent_names))
+        edges_from_nodes = []
 
+        if self.dependant_agents:
+            for node in self.dependant_agents:
+                edges_from_nodes.append(node.name)
+
+        builder.add_node(
+            supervisor_agent,
+            destinations=tuple(list(agent_names) + edges_from_nodes),
+        )
         builder.add_edge(START, supervisor_agent.name)
 
         # Add all other agents - they can only go back to supervisor
         for agent, description in processed_agents:
             builder.add_node(
-                agent.name,
+                agent.name,  # this string has to be same used in the Command object inside the handoff_tool
                 _make_call_agent(
+                    agent,
+                    self.add_handoff_back_messages,
+                    self.supervisor_name,
+                ),
+            )
+            builder.add_edge(agent.name, supervisor_agent.name)
+
+        for agent, description in dependant_agents:
+            builder.add_node(
+                agent.name,  # this string has to be same used in the Command object inside the handoff_tool
+                _make_call_dependant_agent(
                     agent,
                     self.add_handoff_back_messages,
                     self.supervisor_name,
@@ -198,7 +205,18 @@ class TWSupervisor:
         """
         if "__interrupt__" in chunk:
             # human interruption
-            new_message = AIMessage(content=chunk["__interrupt__"][0].value)
+            interrupt_content_base = chunk["__interrupt__"][0].value
+            if isinstance(interrupt_content_base, str):
+                # When it is a complete handoff
+                interrupt_content = InterruptBaseModel.parse_obj(
+                    {"user_message": interrupt_content_base}
+                )
+            else:
+                interrupt_content = InterruptBaseModel.parse_obj(
+                    chunk["__interrupt__"][0].value
+                )
+
+            new_message = AIMessage(content=interrupt_content.user_message)
             metadata = {
                 "ns": chunk["__interrupt__"][0].ns,
                 "target_entity": "agent",
@@ -207,6 +225,7 @@ class TWSupervisor:
             }
             result["messages"].append(new_message)
             result["metadata"].update(metadata)
+            result["tools_called"].extend(interrupt_content.tools_called)
         else:
             for key, values in chunk.items():
                 # we always want the last
