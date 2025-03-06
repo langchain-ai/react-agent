@@ -31,11 +31,16 @@ from tw_ai_agents.agents.tools.actions_retriever import (
     get_agent_list,
     ActionListReturnModel,
 )
+from tw_ai_agents.metadata_generator.endpoints import metadata_router
 
 load_dotenv()
 PORT = int(os.getenv("PORT", "8000"))
 
 app = FastAPI()
+
+# Add sub-routers to the app
+app.include_router(metadata_router)
+
 
 model_name: str = "openai/gpt-4o"
 model = get_llm_model(model_name)
