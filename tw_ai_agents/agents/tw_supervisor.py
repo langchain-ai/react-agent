@@ -18,14 +18,16 @@ from tw_ai_agents.agents.handoff import (
     _make_call_agent,
     create_handoff_tool,
     SUBAGENT_TOOL_NAME_PREFIX,
-    _make_call_dependant_agent,
 )
 from tw_ai_agents.agents.message_types.base_message_type import (
     State,
     ToolMessageInfo,
     InterruptBaseModel,
 )
-from tw_ai_agents.agents.tools.human_tools import COMPLETE_HANDOFF_STRING
+from tw_ai_agents.agents.tools.human_tools import (
+    COMPLETE_HANDOFF_STRING,
+    AskUserTool,
+)
 
 conn = sqlite3.connect("checkpoints.sqlite")
 memory = SqliteSaver(conn)
@@ -44,7 +46,7 @@ class TWSupervisor:
         output_mode: OutputMode = "last_message",
         add_handoff_back_messages: bool = False,
         supervisor_name: str = "supervisor",
-        dependant_agents: Optional[List[Any]] = None,
+        dependant_agents: Optional[List[AskUserTool]] = None,
     ):
         """
 
@@ -72,7 +74,7 @@ class TWSupervisor:
         self.compiled_graph = None
         self.description = description
         self.memory = memory
-        self.dependant_agents = dependant_agents
+        self.dependant_agents = dependant_agents or []
 
     def _process_agent(self, agent):
         """Process an agent which could be a CompiledStateGraph or another TWSupervisor."""
@@ -108,19 +110,13 @@ class TWSupervisor:
 
             agent_names.add(agent.name)
 
-        dependant_agents = (
-            [(agent, agent.description) for agent in self.dependant_agents]
-            if self.dependant_agents
-            else []
-        )
-
         handoff_tools = [
             create_handoff_tool(
                 agent_name=agent.name,
                 agent_description=description,
             )
-            for agent, description in processed_agents + dependant_agents
-        ]
+            for agent, description in processed_agents
+        ] + [agent.create_handoff_tool() for agent in self.dependant_agents]
         all_tools = (self.tools or []) + handoff_tools
 
         if (
@@ -169,14 +165,10 @@ class TWSupervisor:
             )
             builder.add_edge(agent.name, supervisor_agent.name)
 
-        for agent, description in dependant_agents:
+        for agent in self.dependant_agents:
             builder.add_node(
                 agent.name,  # this string has to be same used in the Command object inside the handoff_tool
-                _make_call_dependant_agent(
-                    agent,
-                    self.add_handoff_back_messages,
-                    self.supervisor_name,
-                ),
+                agent.make_call_dependant_agent(),
             )
             builder.add_edge(agent.name, supervisor_agent.name)
 
@@ -219,7 +211,7 @@ class TWSupervisor:
             new_message = AIMessage(content=interrupt_content.user_message)
             metadata = {
                 "ns": chunk["__interrupt__"][0].ns,
-                "target_entity": "agent",
+                "target_entity": interrupt_content.destination,
                 "complete_handoff": COMPLETE_HANDOFF_STRING
                 == new_message.content,
             }
@@ -288,10 +280,14 @@ class TWSupervisor:
         """
         graph = self.get_supervisor_compiled_graph()
 
+        result = None
         for chunk in graph.stream(state, config=config):
             # We only want the latest result
             result = {"messages": [], "metadata": {}, "tools_called": []}
             result = self._process_output_chunk(chunk, result)
+
+        if result is None:
+            raise ValueError("No output from the graph execution")
 
         if "metadata" not in result:
             result["metadata"] = {}

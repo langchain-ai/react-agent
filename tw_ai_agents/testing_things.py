@@ -28,16 +28,7 @@ full_compiled_graph = supervisor.get_supervisor_compiled_graph()
 
 def main():
     discussion_id = f"123456_{int(time.time())}"
-    input_data = AgentResponseRequest(
-        message_type="user",
-        # message_text="Typewise sucks.",
-        message_text="Hello!",
-        discussion_id=discussion_id,
-        client="typewise",
-        channel_type_id="67bed9fe3b2f84a3a5e67779",
-    )
-    output = process_agent_response(input_data)
-    print(output)
+
     input_data = AgentResponseRequest(
         message_type="user",
         # message_text="Typewise sucks.",

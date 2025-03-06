@@ -90,26 +90,7 @@ def process_agent_response(
     Raises:
         HTTPException: If there's an error processing the message.
     """
-    # Create the initial state with message
-    message = HumanMessage(content=request.message_text)
-
-    # Initialize a proper State object using dict notation
     message_type = request.message_type
-    if message_type == "user":
-        initial_state = {
-            "messages": [message],
-            "metadata": {"discussion_id": request.discussion_id},
-            "remaining_steps": 10,
-        }
-    elif message_type == "agent":
-        initial_state = Command(
-            resume=request.message_text,
-        )
-    else:
-        raise HTTPException(
-            status_code=400,
-            detail="Invalid message type. Please use 'user' or 'agent'.",
-        )
 
     input_configs = get_input_configs()
 
@@ -153,6 +134,7 @@ def process_agent_response(
                     resume=request.message_text,
                 )
             elif message_type == "user":
+                message = HumanMessage(content=request.message_text)
                 initial_state = {
                     "messages": [message],
                     "metadata": {"discussion_id": request.discussion_id},

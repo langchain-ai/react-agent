@@ -1,8 +1,4 @@
-"""Handoff functionality for supervisor agent system.
-
-This module provides tools for transferring control between agents in a multi-agent system.
-"""
-
+import copy
 import re
 import uuid
 from typing import Callable, Dict, List, Literal, Optional, Tuple
@@ -13,6 +9,7 @@ from langchain_core.messages import (
     HumanMessage,
     ToolCall,
     ToolMessage,
+    RemoveMessage,
 )
 from langchain_core.tools import BaseTool, tool
 from langchain_core.tools.base import InjectedToolCallId
@@ -141,6 +138,9 @@ def _make_call_agent(
     def _process_output(
         output: Dict, old_messages: Optional[Dict] = None
     ) -> agent.output_schema:
+        output = output.copy()
+        old_messages = old_messages or {}
+        old_messages = old_messages.copy()
         all_messages = old_messages + output["messages"]
 
         if add_handoff_back_messages:
@@ -160,50 +160,74 @@ def _make_call_agent(
 
         # Iterate in reverse to find the first HumanMessage and check if the previous one is a ToolMessage
         for i in range(len(all_messages) - 1, 0, -1):
-            if isinstance(all_messages[i], HumanMessage):
+            if (
+                isinstance(all_messages[i], HumanMessage)
+                and getattr(all_messages[i], "from_user", True) == False
+            ):
                 if isinstance(all_messages[i - 1], ToolMessage):
                     last_tool_idx = i - 1
                 break
 
-        if last_tool_idx is not None:
-            # Update the content of that ToolMessage with the final AI response
-            new_tools_called = []
-            for idx in range(last_tool_idx, len(all_messages)):
-                message = all_messages[idx]
-                if isinstance(message, ToolMessage):
-                    # get the previous ai message, if available. It contains the params of the tool call
-                    previous_ai_message = (
-                        all_messages[idx - 1] if idx > 0 else None
-                    )
-                    parameters = (
-                        previous_ai_message.tool_calls[0].get("args", {})
-                        if previous_ai_message
-                        else {}
-                    )
+        if last_tool_idx is None:
+            raise ValueError("Could not find appropriate ToolMessage to update")
 
-                    new_tools_called.append(
-                        ToolMessageInfo(
-                            content=message.content,
-                            name=message.name,
-                            tool_call_id=message.tool_call_id,
-                            id=message.id,
-                            parameters=parameters,
-                        )
-                    )
-            to_return_message = all_messages[last_tool_idx]
-            to_return_message.content = f"{all_messages[-1].content}"
+        # Update the content of that ToolMessage with the final AI response, to give them back to UI
+        new_tools_called = []
+        potential_user_messages = []
+        for idx in range(last_tool_idx, len(all_messages)):
+            message = all_messages[idx]
+            if isinstance(message, ToolMessage):
+                # get the previous ai message, if available. It contains the params of the tool call
+                previous_ai_message = all_messages[idx - 1] if idx > 0 else None
+                parameters = (
+                    previous_ai_message.tool_calls[0].get("args", {})
+                    if previous_ai_message
+                    else {}
+                )
 
+                new_tools_called.append(
+                    ToolMessageInfo(
+                        content=message.content,
+                        name=message.name,
+                        tool_call_id=message.tool_call_id,
+                        id=message.id,
+                        parameters=parameters,
+                    )
+                )
+
+            if (
+                isinstance(message, AIMessage)
+                and i + 1 < len(all_messages)
+                and isinstance(all_messages[i + 1], HumanMessage)
+                and getattr(all_messages[i + 1], "from_user", True) == True
+            ):
+                # We found a User Conversation done inside this sub-agent
+                potential_user_messages.append(message)
+                potential_user_messages.append(all_messages[i + 1])
+        a = 1
+        old_messages_to_remove = all_messages[
+            last_tool_idx - 1 : last_tool_idx + 1
+        ]
+        to_remove_messages = [
+            RemoveMessage(id=m.id) for m in old_messages_to_remove
+        ]
+        to_append_messages = copy.deepcopy(old_messages_to_remove)
+        for to_append_message in to_append_messages:
+            to_append_message.id = None
+        # here we keep the same ID so that the ToolMessage inside messages is updated.
+        # We are not adding a new message, just update the ToolMessage that is there and was created by create_handoff_tool
+        to_append_messages[-1].content = f"{all_messages[-1].content}"
+
+        return {
+            **output,
+            "messages": to_remove_messages
+            + potential_user_messages
+            + to_append_messages,
+            # we add new tools before because this code is called when going back up on the graph.
+            "tools_called": new_tools_called + output["tools_called"],
             # Remove last message from supervisor, as it was used in the supervisor processing
-
-            return {
-                **output,
-                "messages": to_return_message,
-                # we add new tools before because this code is called when going back up on the graph.
-                "tools_called": new_tools_called + output["tools_called"],
-                "message_from_supervisor": [None],
-            }
-
-        raise ValueError("Could not find appropriate ToolMessage to update")
+            "message_from_supervisor": [None],
+        }
 
     def _process_input(
         input: State,
@@ -230,55 +254,16 @@ def _make_call_agent(
         input["messages"] = [last_message]
         return input, other_messages
 
-    def call_agent(state: Dict) -> Dict:
-        state, old_messages = _process_input(state)
+    def call_agent(input_state: Dict) -> Dict:
+        is_copy = copy.deepcopy(input_state)
+        state, old_messages = _process_input(input_state)
         output = agent.invoke(state)
-        return _process_output(output, old_messages)
+        output_dict = _process_output(output, old_messages)
+        return output_dict
 
     async def acall_agent(state: Dict) -> Dict:
         state, old_messages = _process_input(state)
         output = await agent.ainvoke(state)
         return _process_output(output, old_messages)
-
-    return RunnableCallable(call_agent, acall_agent)
-
-
-def _make_call_dependant_agent(
-    agent: CompiledStateGraph,
-    add_handoff_back_messages: bool,
-    supervisor_name: str,
-) -> Callable[[Dict], Dict]:
-    """
-    Create a function that calls an agent and processes its output.
-    This function is what is actually executed when the handoff to a sub-agent happens.
-    Here is were we process messages going to and coming from sub-agents.
-
-    Args:
-        agent: The agent to call.
-        add_handoff_back_messages: Whether to add handoff back messages.
-        supervisor_name: The name of the supervisor agent.
-
-    Returns:
-        A callable that invokes the agent and processes its output.
-    """
-
-    def _process_output(output: Dict) -> Dict:
-        # remove last message_from_supervisor
-        return {**output, "message_from_supervisor": [None]}
-
-    def _process_input(
-        input: State,
-    ) -> State:
-        return input
-
-    def call_agent(state: Dict) -> Dict:
-        state = _process_input(state)
-        output = agent.invoke(state)
-        return _process_output(output)
-
-    async def acall_agent(state: Dict) -> Dict:
-        state = _process_input(state)
-        output = await agent.ainvoke(state)
-        return _process_output(output)
 
     return RunnableCallable(call_agent, acall_agent)

@@ -1,14 +1,35 @@
-from typing import Any, List, Union
+import re
+from typing import Any, Union
+from typing import Callable, Dict, List
 
 from langchain import hub
-from langchain_core.messages import AIMessage, HumanMessage
-from langchain_core.tools import tool
+from langchain_core.messages import (
+    AIMessage,
+    HumanMessage,
+    ToolMessage,
+    RemoveMessage,
+)
+from langchain_core.tools import BaseTool, tool
+from langchain_core.tools.base import InjectedToolCallId
+from langgraph.graph.state import CompiledStateGraph
+from langgraph.types import Command
 from langgraph.types import interrupt
+from langgraph.utils.runnable import RunnableCallable
+from pydantic import BaseModel
+from typing_extensions import Annotated
 
+from tw_ai_agents.agents.handoff import _normalize_agent_name
 from tw_ai_agents.agents.message_types.base_message_type import (
     InterruptBaseModel,
+)
+from tw_ai_agents.agents.message_types.base_message_type import (
     State,
 )
+
+WHITESPACE_RE = re.compile(r"\s+")
+SUBAGENT_TOOL_NAME_PREFIX = f"transfer_to_"
+SUBAGENT_TOOL_NAME_SUFFIX = "_agent"
+
 
 COMPLETE_HANDOFF_STRING = "Handoff the full conversation to a real agent."
 
@@ -50,7 +71,7 @@ def handoff_conversation_to_real_agent() -> str:
 class AskUserTool:
     # Class-level constants
     TOOL_NAME = "ask_user"
-    TOOL_DESCRIPTION = "Tool to ask the final user for an additional input."
+    TOOL_DESCRIPTION = "Tool write directly to the user for an additional information or final resolution."
     HUB_MODEL_NAME = "agent-writing_instructions"
     LOG_PREFIX = "> Received an input from the interrupt from user: "
 
@@ -109,6 +130,7 @@ class AskUserTool:
             InterruptBaseModel(
                 user_message=user_message,
                 tools_called=tools_called,
+                destination="user",
             ).dict(),
         )
         print(f"{self.LOG_PREFIX}{answer}")
@@ -188,3 +210,96 @@ class AskUserTool:
                 for message in messages_to_from_user
             ]
         )
+
+    def make_call_dependant_agent(
+        self,
+    ) -> Callable[[Dict], Dict]:
+        """
+        Create a function that calls an agent and processes its output.
+        This function is what is actually executed when the handoff to a sub-agent happens.
+        Here is were we process messages going to and coming from sub-agents.
+
+        Returns:
+            A callable that invokes the agent and processes its output.
+        """
+
+        def _process_output(output: Dict, input_state: State) -> Dict:
+            # Remove last two messages which were the AIMessage to call the Tool, plus the ToolMessage created by create_handoff_tool
+            delete_messages = [
+                RemoveMessage(id=m.id) for m in input_state["messages"][-2:]
+            ]
+
+            # Add the two messages back and forth from the user, as a normal conversation
+            to_add_messages = output["messages_to_from_user"]
+
+            updated_messages = delete_messages + to_add_messages
+
+            # remove last message_from_supervisor
+            return {
+                **output,
+                "messages": updated_messages,
+                "message_from_supervisor": [None],
+            }
+
+        def _process_input(
+            input: State,
+        ) -> State:
+            return input
+
+        def call_agent(input_state: State) -> Dict:
+            state = _process_input(input_state)
+            output = self.invoke(state)
+            return _process_output(output, input_state)
+
+        async def acall_agent(input_state: State) -> Dict:
+            state = _process_input(input_state)
+            output = await self.ainvoke(state)
+            return _process_output(output, input_state)
+
+        return RunnableCallable(call_agent, acall_agent)
+
+    def create_handoff_tool(self) -> BaseTool:
+        """Create a tool that can handoff control to the requested agent.
+
+        Args:
+            agent_name: The name of the agent to handoff control to, i.e.
+                the name of the agent node in the multi-agent graph.
+                Agent names should be simple, clear and unique, preferably in snake_case,
+                although you are only limited to the names accepted by LangGraph
+                nodes as well as the tool names accepted by LLM providers
+                (the tool name will look like this: `transfer_to_<agent_name>`).
+
+        Returns:
+            A tool that can be used to transfer control to another agent.
+        """
+        tool_name = "ask_user"
+
+        class BaseArgsSchema(BaseModel):
+            tool_call_id: Annotated[str, InjectedToolCallId]
+            message_for_user: str
+
+        @tool(
+            tool_name, description=self.description, args_schema=BaseArgsSchema
+        )
+        def handoff_to_agent(
+            tool_call_id: Annotated[str, InjectedToolCallId],
+            message_for_user: str,
+        ) -> Command:
+            """Ask another agent for help."""
+            tool_message = ToolMessage(
+                content=f"Successfully transferred to {self.name}\n\n"
+                f"## Message from the user\n"
+                f"{message_for_user}",
+                name=tool_name,
+                tool_call_id=tool_call_id,
+            )
+            return Command(
+                goto=self.name,
+                graph=Command.PARENT,
+                update={
+                    "messages": [tool_message],
+                    "message_from_supervisor": [message_for_user],
+                },
+            )
+
+        return handoff_to_agent

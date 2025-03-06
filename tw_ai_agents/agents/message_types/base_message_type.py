@@ -1,4 +1,13 @@
-from typing import Annotated, Any, Dict, List, Optional, Sequence, Union
+from typing import (
+    Annotated,
+    Any,
+    Dict,
+    List,
+    Optional,
+    Sequence,
+    Union,
+    Literal,
+)
 
 from langchain_core.messages import AnyMessage, BaseMessage
 from langgraph.graph import MessagesState, add_messages
@@ -82,4 +91,5 @@ class State(BaseModel):
 
 class InterruptBaseModel(BaseModel):
     user_message: str
-    tools_called: List[ToolMessageInfo]
+    tools_called: List[ToolMessageInfo] = []
+    destination: Literal["agent", "user"] = "agent"
