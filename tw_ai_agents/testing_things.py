@@ -41,7 +41,7 @@ def main():
     input_data = AgentResponseRequest(
         message_type="user",
         # message_text="Typewise sucks.",
-        message_text="Hey. All good? I want to change the address in my account!",
+        message_text="typewise sucks",
         discussion_id=discussion_id,
         client="typewise",
         channel_type_id="67bed9fe3b2f84a3a5e67779",

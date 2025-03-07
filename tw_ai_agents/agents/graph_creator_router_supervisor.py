@@ -627,7 +627,7 @@ class GraphRunner:
                 "target_entity": interrupt_content.destination,
                 "complete_handoff": COMPLETE_HANDOFF_STRING
                 == new_message.content,
-                "agent_message_mode": interrupt_content.agent_message_mode,
+                "agent_message_mode": interrupt_content.agent_message_mode.value,
             }
             result["messages"].append(new_message)
             result["metadata"].update(metadata)
