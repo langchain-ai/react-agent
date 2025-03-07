@@ -26,7 +26,6 @@ from tw_ai_agents.agents.message_types.base_message_type import (
 )
 from tw_ai_agents.agents.tools.human_tools import (
     COMPLETE_HANDOFF_STRING,
-    AskUserTool,
 )
 
 conn = sqlite3.connect("checkpoints.sqlite")
@@ -46,7 +45,7 @@ class TWSupervisor:
         output_mode: OutputMode = "last_message",
         add_handoff_back_messages: bool = False,
         supervisor_name: str = "supervisor",
-        dependant_agents: Optional[List[AskUserTool]] = None,
+        dependant_agents: Optional[List[Any]] = None,
     ):
         """
 

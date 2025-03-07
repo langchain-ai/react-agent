@@ -25,7 +25,6 @@ from tw_ai_agents.agents.tools.tools import (
 from tw_ai_agents.agents.tools.human_tools import (
     real_human_agent_execute_actions,
     handoff_conversation_to_real_agent,
-    AskUserTool,
 )
 
 # Load environment variables

@@ -51,7 +51,6 @@ from tw_ai_agents.agents.handoff import (
 from tw_ai_agents.agents.llm_models_loader import get_llm_model
 from tw_ai_agents.agents.message_types.base_message_type import State
 from tw_ai_agents.agents.tools.human_tools import (
-    AskUserTool,
     handoff_conversation_to_real_agent,
     real_human_agent_execute_actions,
 )
@@ -93,7 +92,7 @@ class CaseAgent:
         name: str,
         description: str,
         memory=None,
-        dependant_agents: Optional[List[AskUserTool]] = None,
+        dependant_agents: Optional[List[Any]] = None,
     ):
         """Initialize a CaseAgent.
 

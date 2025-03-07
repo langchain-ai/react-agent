@@ -19,12 +19,12 @@ model = get_llm_model(model_name)
 from langgraph.checkpoint.memory import MemorySaver
 
 memory = MemorySaver()
-supervisor = get_complete_graph(
-    model,
-    input_configs,
-    memory=memory,
-    channel_type_id="67bed9fe3b2f84a3a5e67779",
-)
+# supervisor = get_complete_graph(
+#     model,
+#     input_configs,
+#     memory=memory,
+#     channel_type_id="67bed9fe3b2f84a3a5e67779",
+# )
 # full_compiled_graph = supervisor.get_supervisor_compiled_graph()
 full_compiled_graph = get_complete_graph_router_supervisor(
     model,
