@@ -1,13 +1,14 @@
 from collections import defaultdict
+from enum import Enum
 from typing import (
     Annotated,
     Any,
     Dict,
     List,
+    Literal,
     Optional,
     Sequence,
     Union,
-    Literal,
 )
 
 from langchain_core.messages import AnyMessage, BaseMessage
@@ -96,7 +97,15 @@ class State(BaseModel):
         self.messages_to_from_user = messages
 
 
+class AgentMessageMode(str, Enum):
+    COMPLETE_HANDOFF = "complete_handoff"
+    QUESTION = "question"
+    CONFIRMATION = "confirmation"
+    ACTION_REQUEST = "action_request"
+
+
 class InterruptBaseModel(BaseModel):
     user_message: str
+    agent_message_mode: AgentMessageMode
     tools_called: List[ToolMessageInfo] = []
     destination: Literal["agent", "user"] = "agent"

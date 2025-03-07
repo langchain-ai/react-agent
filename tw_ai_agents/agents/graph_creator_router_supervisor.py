@@ -20,7 +20,10 @@ from tw_ai_agents.agents.message_types.base_message_type import (
     ToolMessageInfo,
 )
 from tw_ai_agents.agents.tools.actions_retriever import AGENT_LIST
-from tw_ai_agents.agents.tools.human_tools import COMPLETE_HANDOFF_STRING
+from tw_ai_agents.agents.tools.human_tools import (
+    COMPLETE_HANDOFF_STRING,
+    get_information_from_real_agent,
+)
 
 WHITESPACE_RE = re.compile(r"\s+")
 SUBAGENT_TOOL_NAME_PREFIX = f"transfer_to_"
@@ -460,6 +463,7 @@ def get_complete_graph_router_supervisor(
     shared_tools = [
         handoff_conversation_to_real_agent,
         real_human_agent_execute_actions,
+        get_information_from_real_agent,
     ]
 
     for config in configs["caseCategories"]:
@@ -485,7 +489,10 @@ def get_complete_graph_router_supervisor(
 
         handoff_conditions = config["handoffConditions"]["text"]
         agent_prompt = hub.pull("case_agent_initial_prompt").format(
-            instructions=instructions, handoff_conditions=handoff_conditions
+            instructions=instructions,
+            handoff_conditions=handoff_conditions,
+            channel_type=channel_type,
+            channel_rules=channel_rules,
         )
         subagents_list.append(
             CaseAgent(
@@ -615,11 +622,13 @@ class GraphRunner:
                 )
 
             new_message = AIMessage(content=interrupt_content.user_message)
+
             metadata = {
                 "ns": chunk["__interrupt__"][0].ns,
                 "target_entity": interrupt_content.destination,
                 "complete_handoff": COMPLETE_HANDOFF_STRING
                 == new_message.content,
+                "agent_message_mode": interrupt_content.agent_message_mode,
             }
             result["messages"].append(new_message)
             result["metadata"].update(metadata)
