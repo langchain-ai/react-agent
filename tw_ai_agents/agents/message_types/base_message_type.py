@@ -1,3 +1,4 @@
+from collections import defaultdict
 from typing import (
     Annotated,
     Any,
@@ -52,6 +53,12 @@ def custom_add_with_None(a, b):
     return a
 
 
+def custom_dict_add(a, b):
+    for key, value in b.items():
+        a[key] = value
+    return a
+
+
 class StateTD(MessagesState):
     """State for the agent system, extending MessagesState with metadata for tool tracking."""
 
@@ -69,7 +76,7 @@ class State(BaseModel):
     is_last_step: IsLastStep
     remaining_steps: RemainingSteps
     # next: str
-    metadata: Dict[str, Any]
+    metadata: Annotated[Dict[str, Any], custom_dict_add] = defaultdict(dict)
     tools_called: Annotated[List[ToolMessageInfo], custom_add] = []
     messages_to_from_user: Annotated[list[AnyMessage], add_messages]
     message_from_supervisor: Annotated[
