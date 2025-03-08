@@ -14,7 +14,7 @@ from typing import (
 from langchain_core.messages import AnyMessage, BaseMessage
 from langgraph.graph import MessagesState, add_messages
 from langgraph.managed import IsLastStep, RemainingSteps
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 def custom_add(a, b):
@@ -64,13 +64,25 @@ class State(BaseModel):
     """State for the agent system, extending MessagesState with metadata for tool tracking."""
 
     messages: Annotated[Sequence[BaseMessage], add_messages]
-    is_last_step: IsLastStep
-    remaining_steps: RemainingSteps
-    metadata: Annotated[Dict[str, Any], custom_dict_add] = defaultdict(dict)
-    tools_called: Annotated[List[ToolMessageInfo], custom_add] = []
+    is_last_step: IsLastStep = Field(
+        default_factory=IsLastStep, description="Required field"
+    )
+    remaining_steps: RemainingSteps = Field(
+        default_factory=RemainingSteps, description="Required field"
+    )
+    metadata: Annotated[Dict[str, Any], custom_dict_add] = Field(
+        default_factory=dict,
+        description="Metadata field. Expecially needed to store the initial router destination",
+    )
+    tools_called: Annotated[List[ToolMessageInfo], custom_add] = Field(
+        default_factory=list, description="List of tools called by the agent"
+    )
     message_from_supervisor: Annotated[
         List[Union[str, None]], custom_add_with_None
-    ] = []
+    ] = Field(
+        default_factory=list,
+        description="List of messages from an agent to a sub-agent, on any level.",
+    )
 
     def __getitem__(self, key: str) -> Any:
         return getattr(self, key)
