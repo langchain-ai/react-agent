@@ -1,7 +1,6 @@
 import copy
-import re
 import uuid
-from typing import Callable, Dict, List, Literal, Optional, Tuple
+from typing import Callable, Dict, List, Optional, Tuple
 
 from langchain_core.messages import (
     AIMessage,
@@ -23,10 +22,11 @@ from tw_ai_agents.agents.message_types.base_message_type import (
     ToolMessageInfo,
     State,
 )
-
-WHITESPACE_RE = re.compile(r"\s+")
-SUBAGENT_TOOL_NAME_PREFIX = f"transfer_to_"
-SUBAGENT_TOOL_NAME_SUFFIX = "_agent"
+from tw_ai_agents.config_handler.constants import (
+    WHITESPACE_RE,
+    SUBAGENT_TOOL_NAME_PREFIX,
+    SUBAGENT_TOOL_NAME_SUFFIX,
+)
 
 
 def _normalize_agent_name(agent_name: str) -> str:
@@ -111,9 +111,6 @@ def create_handoff_back_messages(
             tool_call_id=tool_call_id,
         ),
     )
-
-
-OutputMode = Literal["full_history", "last_message"]
 
 
 def _make_call_agent(

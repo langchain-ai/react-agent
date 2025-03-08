@@ -1,5 +1,3 @@
-import re
-
 from langchain_core.tools import tool
 from langgraph.types import interrupt
 
@@ -7,11 +5,6 @@ from tw_ai_agents.agents.message_types.base_message_type import (
     AgentMessageMode,
     InterruptBaseModel,
 )
-
-WHITESPACE_RE = re.compile(r"\s+")
-SUBAGENT_TOOL_NAME_PREFIX = f"transfer_to_"
-SUBAGENT_TOOL_NAME_SUFFIX = "_agent"
-
 
 COMPLETE_HANDOFF_STRING = "Handoff the full conversation to a real agent."
 

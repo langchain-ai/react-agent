@@ -17,23 +17,6 @@ from langgraph.managed import IsLastStep, RemainingSteps
 from pydantic import BaseModel
 
 
-class ToolMessageInfo(BaseModel):
-    name: str
-    content: str
-    tool_call_id: str
-    id: str
-    parameters: Optional[Dict[str, Any]] = None
-
-    def __eq__(self, other):
-        return (
-            self.name == other.name
-            and self.content == other.content
-            and self.tool_call_id == other.tool_call_id
-            and self.id == other.id
-            and self.parameters == other.parameters
-        )
-
-
 def custom_add(a, b):
     for b_item in b:
         if b_item not in a:
@@ -60,14 +43,21 @@ def custom_dict_add(a, b):
     return a
 
 
-class StateTD(MessagesState):
-    """State for the agent system, extending MessagesState with metadata for tool tracking."""
+class ToolMessageInfo(BaseModel):
+    name: str
+    content: str
+    tool_call_id: str
+    id: str
+    parameters: Optional[Dict[str, Any]] = None
 
-    next: str
-    remaining_steps: int
-    metadata: Dict[str, Any]
-    tools_called: Annotated[List[ToolMessageInfo], custom_add] = []
-    messages_to_from_user: Annotated[list[AnyMessage], add_messages]
+    def __eq__(self, other):
+        return (
+            self.name == other.name
+            and self.content == other.content
+            and self.tool_call_id == other.tool_call_id
+            and self.id == other.id
+            and self.parameters == other.parameters
+        )
 
 
 class State(BaseModel):
@@ -76,10 +66,8 @@ class State(BaseModel):
     messages: Annotated[Sequence[BaseMessage], add_messages]
     is_last_step: IsLastStep
     remaining_steps: RemainingSteps
-    # next: str
     metadata: Annotated[Dict[str, Any], custom_dict_add] = defaultdict(dict)
     tools_called: Annotated[List[ToolMessageInfo], custom_add] = []
-    messages_to_from_user: Annotated[list[AnyMessage], add_messages]
     message_from_supervisor: Annotated[
         List[Union[str, None]], custom_add_with_None
     ] = []

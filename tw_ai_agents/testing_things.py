@@ -1,38 +1,31 @@
 import time
 
-from tw_ai_agents.agents.graph_creator import (
-    get_complete_graph,
-    get_input_configs,
-)
 from tw_ai_agents.agents.graph_creator_router_supervisor import (
     get_complete_graph_router_supervisor,
+    get_input_configs,
 )
 from tw_ai_agents.agents.llm_models_loader import get_llm_model
 from tw_ai_agents.config_handler.pydantic_models.agent_models import (
     AgentResponseRequest,
 )
 from tw_ai_agents.server import process_agent_response
+from langgraph.checkpoint.memory import MemorySaver
 
 input_configs = get_input_configs()
 model_name: str = "openai/gpt-4o"
 model = get_llm_model(model_name)
-from langgraph.checkpoint.memory import MemorySaver
 
 memory = MemorySaver()
-# supervisor = get_complete_graph(
-#     model,
-#     input_configs,
-#     memory=memory,
-#     channel_type_id="67bed9fe3b2f84a3a5e67779",
-# )
-# full_compiled_graph = supervisor.get_supervisor_compiled_graph()
+
 full_compiled_graph = get_complete_graph_router_supervisor(
     model,
     input_configs,
     memory=memory,
     channel_type_id="67bed9fe3b2f84a3a5e67779",
 )
-full_compiled_graph.get_graph().draw_mermaid_png(output_file_path="graph.png")
+full_compiled_graph.get_graph(xray=False).draw_mermaid_png(
+    output_file_path="graph.png"
+)
 
 
 def main():
@@ -41,7 +34,7 @@ def main():
     input_data = AgentResponseRequest(
         message_type="user",
         # message_text="Typewise sucks.",
-        message_text="typewise sucks",
+        message_text="Hey. I'd like to update the address saved in my account.",
         discussion_id=discussion_id,
         client="typewise",
         channel_type_id="67bed9fe3b2f84a3a5e67779",
