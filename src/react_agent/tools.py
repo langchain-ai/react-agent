@@ -32,9 +32,6 @@ async def search(
     result = await wrapped.ainvoke({"query": query})
     return cast(list[dict[str, Any]], result)
 
-
-TOOLS: List[Callable[..., Any]] = [search]
-
 def get_logs(request_id: str) -> str:
     """
     Sends a POST request to the specified API endpoint with the given request ID.
@@ -55,3 +52,5 @@ def get_logs(request_id: str) -> str:
     response = requests.post(url, headers=headers, data=json.dumps(data))
     response.raise_for_status()  # Raise an exception for HTTP errors
     return response.text
+
+TOOLS: List[Callable[..., Any]] = [search, get_logs]
