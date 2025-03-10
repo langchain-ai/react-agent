@@ -58,3 +58,8 @@ class State(InputState):
     # retrieved_documents: List[Document] = field(default_factory=list)
     # extracted_entities: Dict[str, Any] = field(default_factory=dict)
     # api_connections: Dict[str, Any] = field(default_factory=dict)
+
+class LogState(TypedDict):
+    request_id: str
+    logs: dict
+    report: str

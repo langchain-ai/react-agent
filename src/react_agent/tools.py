@@ -7,6 +7,8 @@ consider implementing more robust and specialized tools tailored to your needs.
 """
 
 from typing import Any, Callable, List, Optional, cast
+import requests
+import json
 
 from langchain_community.tools.tavily_search import TavilySearchResults
 from langchain_core.runnables import RunnableConfig
@@ -32,3 +34,24 @@ async def search(
 
 
 TOOLS: List[Callable[..., Any]] = [search]
+
+def get_logs(request_id: str) -> str:
+    """
+    Sends a POST request to the specified API endpoint with the given request ID.
+    
+    Parameters:
+    - request_id (str): The ID to be included in the request body.
+    
+    Returns:
+    - response: The response object from the API.
+    """
+    url = 'https://gzxkt6chp7.execute-api.us-west-2.amazonaws.com/default/Kenari_Log_Parser'
+    headers = {
+        'Content-Type': 'application/json'
+    }
+    data = {
+        "requestId": request_id
+    }
+    response = requests.post(url, headers=headers, data=json.dumps(data))
+    response.raise_for_status()  # Raise an exception for HTTP errors
+    return response.text
