@@ -51,7 +51,3 @@ The logs don't explicitly show success/failure status. Next steps:
 You are provided with two JSON objects: `authorizerLogs` and `gatewayLogs`. Extract the necessary information from these objects to populate the report. Pay close attention to the extraction instructions and URL construction. If a field is not found, leave that field blank.
 
 System time: {system_time}"""
-
-
-https://us-west-2.console.aws.amazon.com/cloudwatch/home?region=us-west-2#logsV2:log-groups/log-group/API-Gateway-Execution-Logs_3t80gsp5gc%2Fdev?$3FlogStreamNameFilter$3D(extendedRequestId%3D(aafef9a7-0381-4a5e-a668-000c0df52c23)
-https://us-west-2.console.aws.amazon.com/cloudwatch/home?region=us-west-2#logsV2:log-groups/log-group/API-Gateway-Execution-Logs_3t80gsp5gc$252Fdev/log-events/ebc477c4c0089b2abe67b4d45beb5ffc
