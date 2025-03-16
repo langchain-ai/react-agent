@@ -1,7 +1,8 @@
 {
   "dependencies": ["."],
   "graphs": {
-    "agent": "./src/react_agent/graph.py:graph"
+    "agent": "./src/react_agent/graph.py:graph",
+    "inbox_agent": "./src/inbox_agent/graph.py:graph"
   },
   "env": ".env"
 }
