@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field, fields
-from typing import Annotated, Optional
+from typing import Annotated
 
-from langchain_core.runnables import RunnableConfig, ensure_config
+from langchain_core.runnables import ensure_config
+from langgraph.config import get_config
 
 from react_agent import prompts
 
@@ -38,10 +39,12 @@ class Configuration:
     )
 
     @classmethod
-    def from_runnable_config(
-        cls, config: Optional[RunnableConfig] = None
-    ) -> Configuration:
+    def from_context(cls) -> Configuration:
         """Create a Configuration instance from a RunnableConfig object."""
+        try:
+            config = get_config()
+        except RuntimeError:
+            config = None
         config = ensure_config(config)
         configurable = config.get("configurable") or {}
         _fields = {f.name for f in fields(cls) if f.init}

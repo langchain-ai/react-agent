@@ -15,8 +15,7 @@ dependencies = [
     "langchain>=0.2.14",
     "langchain-fireworks>=0.1.7",
     "python-dotenv>=1.0.1",
-    "langchain-community>=0.2.17",
-    "tavily-python>=0.4.0",
+    "langchain-tavily>=0.1",
 ]
 
 
@@ -64,4 +63,5 @@ convention = "google"
 [dependency-groups]
 dev = [
     "langgraph-cli[inmem]>=0.1.71",
+    "pytest>=8.3.5",
 ]

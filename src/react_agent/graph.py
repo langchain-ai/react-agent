@@ -3,11 +3,10 @@
 Works with a chat model with tool calling support.
 """
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Dict, List, Literal, cast
 
 from langchain_core.messages import AIMessage
-from langchain_core.runnables import RunnableConfig
 from langgraph.graph import StateGraph
 from langgraph.prebuilt import ToolNode
 
@@ -19,9 +18,7 @@ from react_agent.utils import load_chat_model
 # Define the function that calls the model
 
 
-async def call_model(
-    state: State, config: RunnableConfig
-) -> Dict[str, List[AIMessage]]:
+async def call_model(state: State) -> Dict[str, List[AIMessage]]:
     """Call the LLM powering our "agent".
 
     This function prepares the prompt, initializes the model, and processes the response.
@@ -33,21 +30,21 @@ async def call_model(
     Returns:
         dict: A dictionary containing the model's response message.
     """
-    configuration = Configuration.from_runnable_config(config)
+    configuration = Configuration.from_context()
 
     # Initialize the model with tool binding. Change the model or add more tools here.
     model = load_chat_model(configuration.model).bind_tools(TOOLS)
 
     # Format the system prompt. Customize this to change the agent's behavior.
     system_message = configuration.system_prompt.format(
-        system_time=datetime.now(tz=timezone.utc).isoformat()
+        system_time=datetime.now(tz=UTC).isoformat()
     )
 
     # Get the model's response
     response = cast(
         AIMessage,
         await model.ainvoke(
-            [{"role": "system", "content": system_message}, *state.messages], config
+            [{"role": "system", "content": system_message}, *state.messages]
         ),
     )
 
@@ -115,9 +112,4 @@ builder.add_conditional_edges(
 builder.add_edge("tools", "call_model")
 
 # Compile the builder into an executable graph
-# You can customize this by adding interrupt points for state updates
-graph = builder.compile(
-    interrupt_before=[],  # Add node names here to update state before they're called
-    interrupt_after=[],  # Add node names here to update state after they're called
-)
-graph.name = "ReAct Agent"  # This customizes the name in LangSmith
+graph = builder.compile(name="ReAct Agent")
