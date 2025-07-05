@@ -65,7 +65,11 @@ async def call_model(state: State) -> Dict[str, List[AIMessage]]:
 
 # Define a new graph
 
-builder = StateGraph(State, input=InputState, config_schema=Configuration)
+builder = StateGraph(
+    State,
+    input_schema=InputState,
+    config_schema=Configuration
+)
 
 # Define the two nodes we will cycle between
 builder.add_node(call_model)
