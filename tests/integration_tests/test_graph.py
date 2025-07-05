@@ -6,7 +6,6 @@ from react_agent import graph
 from react_agent.state import InputState
 
 
-@pytest.mark.asyncio
 @unit
 async def test_react_agent_simple_passthrough() -> None:
     message = HumanMessage(content="Who is the founder of LangChain?")
