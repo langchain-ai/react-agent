@@ -14,11 +14,12 @@ from react_agent.configuration import Configuration
 from react_agent.state import InputState, State
 from react_agent.tools import TOOLS
 from react_agent.utils import load_chat_model
+from langchain_core.runnables import RunnableConfig
 
 # Define the function that calls the model
 
 
-async def call_model(state: State) -> Dict[str, List[AIMessage]]:
+async def call_model(state: State, config: dict) -> Dict[str, List[AIMessage]]:
     """Call the LLM powering our "agent".
 
     This function prepares the prompt, initializes the model, and processes the response.
@@ -30,6 +31,7 @@ async def call_model(state: State) -> Dict[str, List[AIMessage]]:
     Returns:
         dict: A dictionary containing the model's response message.
     """
+    print("CONFIG", config)
     configuration = Configuration.from_context()
 
     # Initialize the model with tool binding. Change the model or add more tools here.
@@ -113,3 +115,24 @@ builder.add_edge("tools", "call_model")
 
 # Compile the builder into an executable graph
 graph = builder.compile(name="ReAct Agent")
+
+if __name__ == "__main__":
+    import asyncio
+
+    async def main():
+        async for chunk in graph.astream(
+            {
+                "messages": [{"role": "user", "content": "Hi there!"}],
+                "configurable": {"foo": "bar"},
+            }
+        ):
+            pass
+
+    from langgraph.version import __version__ as version
+
+    try:
+        asyncio.run(main())
+        print(f"Passed in langgraph version=={version}")
+    except Exception as e:
+        print(f"Failed in langgraph version=={version}")
+        print("ERROR", e)
