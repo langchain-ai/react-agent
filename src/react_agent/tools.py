@@ -10,7 +10,8 @@ from typing import Any, Callable, List, Optional, cast
 
 from langchain_tavily import TavilySearch  # type: ignore[import-not-found]
 
-from react_agent.configuration import Configuration
+from react_agent.context import Context
+from langgraph.runtime import get_runtime
 
 
 async def search(query: str) -> Optional[dict[str, Any]]:
@@ -20,8 +21,8 @@ async def search(query: str) -> Optional[dict[str, Any]]:
     to provide comprehensive, accurate, and trusted results. It's particularly useful
     for answering questions about current events.
     """
-    configuration = Configuration.from_context()
-    wrapped = TavilySearch(max_results=configuration.max_search_results)
+    runtime = get_runtime(Context)
+    wrapped = TavilySearch(max_results=runtime.context.max_search_results)
     return cast(dict[str, Any], await wrapped.ainvoke({"query": query}))
 
 
