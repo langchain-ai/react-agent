@@ -9,9 +9,9 @@ consider implementing more robust and specialized tools tailored to your needs.
 from typing import Any, Callable, List, Optional, cast
 
 from langchain_tavily import TavilySearch  # type: ignore[import-not-found]
+from langgraph.runtime import get_runtime
 
 from react_agent.context import Context
-from langgraph.runtime import get_runtime
 
 
 async def search(query: str) -> Optional[dict[str, Any]]:
