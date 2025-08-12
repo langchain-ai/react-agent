@@ -19,7 +19,9 @@ from react_agent.utils import load_chat_model
 # Define the function that calls the model
 
 
-async def call_model(state: State, runtime: Runtime[Context]) -> Dict[str, List[AIMessage]]:
+async def call_model(
+    state: State, runtime: Runtime[Context]
+) -> Dict[str, List[AIMessage]]:
     """Call the LLM powering our "agent".
 
     This function prepares the prompt, initializes the model, and processes the response.
