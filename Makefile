@@ -9,6 +9,9 @@ TEST_FILE ?= tests/unit_tests/
 test:
 	python -m pytest $(TEST_FILE)
 
+integration_tests:
+	python -m pytest tests/integration_tests 
+
 test_watch:
 	python -m ptw --snapshot-update --now . -- -vv tests/unit_tests
 
