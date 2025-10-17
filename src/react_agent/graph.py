@@ -42,7 +42,7 @@ async def call_model(
     )
 
     # Get the model's response
-    response = cast(
+    response = cast( # type: ignore[redundant-cast]
         AIMessage,
         await model.ainvoke(
             [{"role": "system", "content": system_message}, *state.messages]
