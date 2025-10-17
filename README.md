@@ -41,7 +41,7 @@ The primary [search tool](./src/react_agent/tools.py) [^1] used is [Tavily](http
 The defaults values for `model` are shown below:
 
 ```yaml
-model: anthropic/claude-3-5-sonnet-20240620
+model: claude-sonnet-4-5-20250929
 ```
 
 Follow the instructions below to get set up, or pick one of the additional options.
