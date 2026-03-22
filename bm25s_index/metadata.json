@@ -1,0 +1,102 @@
+[
+  {
+    "error_id": "E001",
+    "category": "DEPENDENCY_ISSUES",
+    "resolution": "Add the missing package to your requirements.txt or rebuild the Docker image."
+  },
+  {
+    "error_id": "E010",
+    "category": "PERMISSION",
+    "resolution": "Check the IAM roles for the service account and ensure it has access to both BigQuery and the underlying source (e.g., Google Drive)."
+  },
+  {
+    "error_id": "E012",
+    "category": "SCHEMA_ISSUES",
+    "resolution": "Align the column names and types between the query and the target table."
+  },
+  {
+    "error_id": "E013",
+    "category": "SCHEMA_ISSUES",
+    "resolution": "Explicitly define the schema instead of relying on automatic inference."
+  },
+  {
+    "error_id": "E014",
+    "category": "DELIVERY_ERRORS",
+    "resolution": "Check network latency or increase the timeout setting in the operator."
+  },
+  {
+    "error_id": "E018",
+    "category": "LOGIC_ERRORS",
+    "resolution": "Verify the path or table name and ensure it was created in previous steps."
+  },
+  {
+    "error_id": "E020",
+    "category": "RESOURCE_LIMITS",
+    "resolution": "Increase the memory limit of the container or optimize the code to handle data in smaller chunks."
+  },
+  {
+    "error_id": "E021",
+    "category": "QUOTA_ISSUES",
+    "resolution": "Implement exponential backoff or request a quota increase from the cloud provider console."
+  },
+  {
+    "error_id": "E022",
+    "category": "NETWORK_ISSUES",
+    "resolution": "Check if the DB server is running and verify firewall/security group rules for the worker IP."
+  },
+  {
+    "error_id": "E023",
+    "category": "RESOURCE_LIMITS",
+    "resolution": "Clean up the /tmp directory or increase the disk size of the worker/PVC."
+  },
+  {
+    "error_id": "E024",
+    "category": "LOGIC_ERRORS",
+    "resolution": "Check the SQL string for missing commas, incorrect keywords, or unclosed quotes."
+  },
+  {
+    "error_id": "E025",
+    "category": "NETWORK_ISSUES",
+    "resolution": "Update the CA certificates in the environment or check if the target's certificate is expired."
+  },
+  {
+    "error_id": "E026",
+    "category": "SPARK_ERRORS",
+    "resolution": "Check executor memory settings or increase the number of retries for Spark tasks."
+  },
+  {
+    "error_id": "E027",
+    "category": "DATA_QUALITY",
+    "resolution": "Inspect the source data for unexpected NULL values or update the target table schema."
+  },
+  {
+    "error_id": "E028",
+    "category": "PERMISSION",
+    "resolution": "Refresh the service account token or update the connection credentials in Airflow."
+  },
+  {
+    "error_id": "E029",
+    "category": "INFRASTRUCTURE",
+    "resolution": "The task should be retried automatically. If it happens frequently, check pod priority settings."
+  },
+  {
+    "error_id": "E030",
+    "category": "DATABASE",
+    "resolution": "Reduce parallelism for this task or check for long-running transactions locking the same tables."
+  },
+  {
+    "error_id": "E031",
+    "category": "CONFIGURATION",
+    "resolution": "Define the missing environment variable in the Airflow deployment or Dockerfile."
+  },
+  {
+    "error_id": "E032",
+    "category": "DATA_QUALITY",
+    "resolution": "Verify the source file integrity and check for unexpected delimiters or header changes."
+  },
+  {
+    "error_id": "E033",
+    "category": "STORAGE_ISSUES",
+    "resolution": "Check if multiple processes are trying to write to the same GCS object simultaneously."
+  }
+]

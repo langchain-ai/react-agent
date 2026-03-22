@@ -42,12 +42,36 @@ async def call_model(
     )
 
     # Get the model's response
-    response = cast( # type: ignore[redundant-cast]
+    response = cast(  # type: ignore[redundant-cast]
         AIMessage,
         await model.ainvoke(
             [{"role": "system", "content": system_message}, *state.messages]
         ),
     )
+
+    # Heuristic for smaller models that output raw JSON instead of native tool calls
+    if not response.tool_calls and isinstance(response.content, str):
+        try:
+            import json, uuid
+            content_str = response.content.strip()
+            # Remove Markdown JSON wrapper if it exists
+            if content_str.startswith("```json") and content_str.endswith("```"):
+                content_str = content_str[7:-3].strip()
+            elif content_str.startswith("```") and content_str.endswith("```"):
+                content_str = content_str[3:-3].strip()
+                
+            data = json.loads(content_str)
+            if isinstance(data, dict) and "name" in data and "arguments" in data:
+                args = data["arguments"]
+                if isinstance(args, str):
+                    args = json.loads(args)
+                response.tool_calls = [{
+                    "name": data["name"],
+                    "args": args,
+                    "id": f"call_{uuid.uuid4().hex[:8]}"
+                }]
+        except Exception:
+            pass
 
     # Handle the case when it's the last step and the model still wants to use a tool
     if state.is_last_step and response.tool_calls:
@@ -64,52 +88,69 @@ async def call_model(
     return {"messages": [response]}
 
 
-# Define a new graph
+import json
 
+from react_agent.regex_rules import check_regex_patterns
+
+
+# Add Regex precheck node
+async def regex_precheck(
+    state: State, runtime: Runtime[Context]
+) -> Dict[str, List[AIMessage]]:
+    """Checks if the log matches any known fast-path regex rules."""
+    report = check_regex_patterns(state.raw_log)
+    if report:
+        # Generate an AIMessage containing the JSON directly to bypass the LLM
+        return {"messages": [AIMessage(content=json.dumps(report, indent=2))]}
+
+    # If no match, return no new messages; the graph will route to call_model
+    return {"messages": []}
+
+
+def route_after_regex(state: State) -> Literal["call_model", "__end__"]:
+    """Routes based on whether regex found a match."""
+    # If the last message is an AIMessage containing our JSON report, we are done
+    if state.messages and isinstance(state.messages[-1], AIMessage):
+        try:
+            # Simple heuristic: if it parsed as JSON and has error_id, it's our regex output
+            data = json.loads(state.messages[-1].content)
+            if "error_id" in data:
+                return "__end__"
+        except Exception:
+            pass
+
+    return "call_model"
+
+
+# Define a new graph
 builder = StateGraph(State, input_schema=InputState, context_schema=Context)
 
-# Define the two nodes we will cycle between
-builder.add_node(call_model)
+# Define nodes
+builder.add_node("regex_precheck", regex_precheck)
+builder.add_node("call_model", call_model)
 builder.add_node("tools", ToolNode(TOOLS))
 
-# Set the entrypoint as `call_model`
-# This means that this node is the first one called
-builder.add_edge("__start__", "call_model")
+# 1. Entrypoint is now strictly the regex precheck
+builder.add_edge("__start__", "regex_precheck")
+
+# 2. Condition after regex precheck -> Either end the graph or call LLM
+builder.add_conditional_edges("regex_precheck", route_after_regex)
 
 
+# 3. From call_model, we route to either TOOLS or END
 def route_model_output(state: State) -> Literal["__end__", "tools"]:
-    """Determine the next node based on the model's output.
-
-    This function checks if the model's last message contains tool calls.
-
-    Args:
-        state (State): The current state of the conversation.
-
-    Returns:
-        str: The name of the next node to call ("__end__" or "tools").
-    """
+    """Determine the next node based on the model's output."""
     last_message = state.messages[-1]
     if not isinstance(last_message, AIMessage):
         raise ValueError(
             f"Expected AIMessage in output edges, but got {type(last_message).__name__}"
         )
-    # If there is no tool call, then we finish
     if not last_message.tool_calls:
         return "__end__"
-    # Otherwise we execute the requested actions
     return "tools"
 
 
-# Add a conditional edge to determine the next step after `call_model`
-builder.add_conditional_edges(
-    "call_model",
-    # After call_model finishes running, the next node(s) are scheduled
-    # based on the output from route_model_output
-    route_model_output,
-)
-
-# Add a normal edge from `tools` to `call_model`
-# This creates a cycle: after using tools, we always return to the model
+builder.add_conditional_edges("call_model", route_model_output)
 builder.add_edge("tools", "call_model")
 
 # Compile the builder into an executable graph

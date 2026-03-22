@@ -16,6 +16,14 @@ dependencies = [
     "langchain-fireworks>=0.1.7",
     "python-dotenv>=1.0.1",
     "langchain-tavily>=0.1",
+    "langchain-ollama>=1.0.1",
+    "langchain-community>=0.4.1",
+    "bm25s>=0.3.2.post1",
+    "chromadb>=1.5.5",
+    "pystemmer>=3.0.0",
+    "langchain-huggingface>=1.2.1",
+    "sentence-transformers>=5.3.0",
+    "langchain-google-genai>=4.2.1",
 ]
 
 
