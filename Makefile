@@ -21,6 +21,15 @@ test_profile:
 extended_tests:
 	python -m pytest --only-extended $(TEST_FILE)
 
+######################
+# MONITORING AND EXECUTION
+######################
+
+phoenix:
+	.venv/bin/python3 -m phoenix.server.main serve
+
+run:
+	export PYTHONPATH=$PYTHONPATH:$(pwd)/src && .venv/bin/python3 test_agent.py
 
 ######################
 # LINTING AND FORMATTING
@@ -64,4 +73,6 @@ help:
 	@echo 'tests                        - run unit tests'
 	@echo 'test TEST_FILE=<test_file>   - run all tests in file'
 	@echo 'test_watch                   - run unit tests in watch mode'
+	@echo 'phoenix                      - start Arize Phoenix dashboard'
+	@echo 'run                          - run the agent with monitoring enabled'
 

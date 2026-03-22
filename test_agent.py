@@ -5,12 +5,16 @@ from dotenv import load_dotenv
 
 from react_agent.context import Context
 from react_agent.graph import graph
+from react_agent.monitoring import init_monitoring
 
 load_dotenv()
 
 # os.environ["OLLAMA_BASE_URL"] = "http://localhost:11434"
 
 async def main():
+    # Initialize Airze Phoenix Monitoring (Open-source alternative to LangSmith)
+    init_monitoring()
+
     sample_log_1 = """
     Caused by: com.google.cloud.spark.bigquery.repackaged.com.google.cloud.bigquery.BigQueryException: Error while reading data, error message: Schema mismatch: referenced variable 'df.list.element.PRODUCT_ID' has array levels of 1, while the corresponding field path to Parquet column has 0 repeated fields File: gs://my-recommendation/temp/.spark-bigquery-application_1683269466816_0014-881c60d3-da1a-44a3-92e3-a10de968b71c/part-00102-7f5d2b2b-22e2-4cf8-98fc-866eacc9c9db-c000.snappy.parquet
 	at com.google.cloud.spark.bigquery.repackaged.com.google.cloud.bigquery.Job.reload(Job.java:419)
