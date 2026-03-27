@@ -7,6 +7,9 @@ on:
     - cron: "37 14 * * *" # Run at 7:37 AM Pacific Time (14:37 UTC) every day
   workflow_dispatch: # Allows triggering the workflow manually in GitHub UI
 
+permissions:
+  contents: read
+
 # If another scheduled run starts while this workflow is still running,
 # cancel the earlier run in favor of the next run.
 concurrency:
