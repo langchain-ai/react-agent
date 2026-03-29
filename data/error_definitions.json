@@ -1,0 +1,246 @@
+[
+  {
+    "error_id": "E001",
+    "pattern_name": "Missing Python Module",
+    "pattern_type": "regex",
+    "pattern": "(?:ModuleNotFoundError: No module named '[VAR]')|(?:ValueError: Please install the '[VAR]' package)",
+    "category": "DEPENDENCY_ISSUES",
+    "description": "Required python package is missing in the execution environment.",
+    "resolution_step": "Add the missing package to your requirements.txt or rebuild the Docker image.",
+    "representative_examples": [
+      "ModuleNotFoundError: No module named 'pandas'",
+      "ValueError: Please install the 'db-dtypes' package to use this function"
+    ]
+  },
+  {
+    "error_id": "E010",
+    "pattern_name": "Permission Denied",
+    "pattern_type": "regex",
+    "pattern": "Forbidden: 403 Access Denied|Permission denied",
+    "category": "PERMISSION",
+    "description": "User does not have sufficient permissions to access the resource (BigQuery, Drive, etc.).",
+    "resolution_step": "Check the IAM roles for the service account and ensure it has access to both BigQuery and the underlying source (e.g., Google Drive).",
+    "representative_examples": [
+      "google.api_core.exceptions.Forbidden: 403 Access Denied: BigQuery: Permission denied while getting Drive credentials."
+    ]
+  },
+  {
+    "error_id": "E012",
+    "pattern_name": "Schema Mismatch",
+    "pattern_type": "simple_string",
+    "pattern": "BadRequest: 400 Provided schema does not match|Invalid schema update",
+    "category": "SCHEMA_ISSUES",
+    "description": "The query result schema does not match the destination table schema.",
+    "resolution_step": "Align the column names and types between the query and the target table.",
+    "representative_examples": [
+      "BadRequest: 400 Provided schema does not match. Field 'amount' has changed type from INT64 to FLOAT64"
+    ]
+  },
+  {
+    "error_id": "E013",
+    "pattern_name": "Schema Inference Failure",
+    "pattern_type": "regex",
+    "pattern": "augment_schema|pyarrow\\.lib\\.check_status",
+    "category": "SCHEMA_ISSUES",
+    "description": "Failed to automatically infer BigQuery schema from DataFrame.",
+    "resolution_step": "Explicitly define the schema instead of relying on automatic inference.",
+    "representative_examples": [
+      "pyarrow.lib.ArrowTypeError: Could not convert FLOAT64 to INT64"
+    ]
+  },
+  {
+    "error_id": "E014",
+    "pattern_name": "Delivery Timeout",
+    "pattern_type": "simple_string",
+    "pattern": "AirflowSensorTimeout|DELIVERY_TIMEOUT: Execution time has exceeded",
+    "category": "DELIVERY_ERRORS",
+    "description": "Data delivery operation exceeded the time limit.",
+    "resolution_step": "Check network latency or increase the timeout setting in the operator.",
+    "representative_examples": [
+      "AirflowSensorTimeout: Timeout reached",
+      "DELIVERY_TIMEOUT: Execution time has exceeded the time limit"
+    ]
+  },
+  {
+    "error_id": "E018",
+    "pattern_name": "File or Table Not Found",
+    "pattern_type": "simple_string",
+    "pattern": "NotFound: 404 Not found: Table|FileNotFoundError: \\[Errno 2\\] No such file or directory",
+    "category": "LOGIC_ERRORS",
+    "description": "The specified source file or destination table does not exist.",
+    "resolution_step": "Verify the path or table name and ensure it was created in previous steps.",
+    "representative_examples": [
+      "NotFound: 404 Not found: Table project.dataset.table",
+      "FileNotFoundError: [Errno 2] No such file or directory: '/tmp/data.csv'"
+    ]
+  },
+  {
+    "error_id": "E020",
+    "pattern_name": "Out of Memory (OOM)",
+    "pattern_type": "regex",
+    "pattern": "MemoryError|exit code 137|OOMKilled",
+    "category": "RESOURCE_LIMITS",
+    "description": "The process was terminated because it exceeded the available memory.",
+    "resolution_step": "Increase the memory limit of the container or optimize the code to handle data in smaller chunks.",
+    "representative_examples": [
+      "MemoryError: Unable to allocate 2.4 GiB for an array with shape",
+      "Container terminated with exit code 137 (OOMKilled)"
+    ]
+  },
+  {
+    "error_id": "E021",
+    "pattern_name": "API Quota Exceeded",
+    "pattern_type": "simple_string",
+    "pattern": "Quota exceeded: Your project exceeded quota|429 Too Many Requests",
+    "category": "QUOTA_ISSUES",
+    "description": "API call frequency or data volume exceeded the cloud provider's quota.",
+    "resolution_step": "Implement exponential backoff or request a quota increase from the cloud provider console.",
+    "representative_examples": [
+      "google.api_core.exceptions.Forbidden: 403 Quota exceeded: Your project exceeded quota for free query bytes per day"
+    ]
+  },
+  {
+    "error_id": "E022",
+    "pattern_name": "Database Connection Refused",
+    "pattern_type": "regex",
+    "pattern": "Connection refused|Failed to establish a new connection|OperationalError: \\(psycopg2\\)",
+    "category": "NETWORK_ISSUES",
+    "description": "Could not connect to the database server. Server might be down or blocked by firewall.",
+    "resolution_step": "Check if the DB server is running and verify firewall/security group rules for the worker IP.",
+    "representative_examples": [
+      "psycopg2.OperationalError: could not connect to server: Connection refused"
+    ]
+  },
+  {
+    "error_id": "E023",
+    "pattern_name": "No Space Left on Device",
+    "pattern_type": "simple_string",
+    "pattern": "No space left on device|[Errno 28]",
+    "category": "RESOURCE_LIMITS",
+    "description": "The local disk or temporary directory is full.",
+    "resolution_step": "Clean up the /tmp directory or increase the disk size of the worker/PVC.",
+    "representative_examples": [
+      "OSError: [Errno 28] No space left on device: '/var/lib/airflow/tmp'"
+    ]
+  },
+  {
+    "error_id": "E024",
+    "pattern_name": "SQL Syntax Error",
+    "pattern_type": "regex",
+    "pattern": "Syntax error|unexpected token|Invalid query",
+    "category": "LOGIC_ERRORS",
+    "description": "The generated SQL query contains syntax errors.",
+    "resolution_step": "Check the SQL string for missing commas, incorrect keywords, or unclosed quotes.",
+    "representative_examples": [
+      "google.api_core.exceptions.BadRequest: 400 Syntax error: Unexpected keyword SELECT at [5:1]"
+    ]
+  },
+  {
+    "error_id": "E025",
+    "pattern_name": "SSL Certificate Verify Failed",
+    "pattern_type": "simple_string",
+    "pattern": "SSL: CERTIFICATE_VERIFY_FAILED|handshake failure",
+    "category": "NETWORK_ISSUES",
+    "description": "SSL handshake failed while connecting to an external API/DB.",
+    "resolution_step": "Update the CA certificates in the environment or check if the target's certificate is expired.",
+    "representative_examples": [
+      "[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self signed certificate"
+    ]
+  },
+  {
+    "error_id": "E026",
+    "pattern_name": "Spark Executor Lost",
+    "pattern_type": "regex",
+    "pattern": "ExecutorLostFailure|FetchFailedException|The executor with id [VAR] was lost",
+    "category": "SPARK_ERRORS",
+    "description": "A Spark executor was terminated, often due to OOM or spot instance preemption.",
+    "resolution_step": "Check executor memory settings or increase the number of retries for Spark tasks.",
+    "representative_examples": [
+      "org.apache.spark.SparkException: Job aborted due to stage failure: ExecutorLostFailure (executor 5 exited caused by external signal)"
+    ]
+  },
+  {
+    "error_id": "E027",
+    "pattern_name": "Null Constraint Violation",
+    "pattern_type": "simple_string",
+    "pattern": "Cannot insert the value NULL|Column [VAR] cannot be null",
+    "category": "DATA_QUALITY",
+    "description": "Attempted to insert NULL into a column that has a NOT NULL constraint.",
+    "resolution_step": "Inspect the source data for unexpected NULL values or update the target table schema.",
+    "representative_examples": [
+      "sqlalchemy.exc.IntegrityError: (psycopg2.errors.NotNullViolation) column 'user_id' contains null values"
+    ]
+  },
+  {
+    "error_id": "E028",
+    "pattern_name": "Authentication Token Expired",
+    "pattern_type": "regex",
+    "pattern": "Token expired|credentials have expired|Unauthorized: 401",
+    "category": "PERMISSION",
+    "description": "The authentication token or credentials used for the service have expired.",
+    "resolution_step": "Refresh the service account token or update the connection credentials in Airflow.",
+    "representative_examples": [
+      "google.auth.exceptions.RefreshError: The credentials have expired and could not be refreshed"
+    ]
+  },
+  {
+    "error_id": "E029",
+    "pattern_name": "Kubernetes Pod Preempted",
+    "pattern_type": "simple_string",
+    "pattern": "Pod was deleted|Preempted by Scheduler",
+    "category": "INFRASTRUCTURE",
+    "description": "The Kubernetes pod running the task was preempted by a higher priority pod or node maintenance.",
+    "resolution_step": "The task should be retried automatically. If it happens frequently, check pod priority settings.",
+    "representative_examples": [
+      "AirflowException: Kubernetes pod was deleted before it could complete"
+    ]
+  },
+  {
+    "error_id": "E030",
+    "pattern_name": "Deadlock Detected",
+    "pattern_type": "simple_string",
+    "pattern": "Deadlock found when trying to get lock|Transaction rollback",
+    "category": "DATABASE",
+    "description": "A database transaction was rolled back because it was deadlocked with another process.",
+    "resolution_step": "Reduce parallelism for this task or check for long-running transactions locking the same tables.",
+    "representative_examples": [
+      "MySQLdb.OperationalError: (1213, 'Deadlock found when trying to get lock; try restarting transaction')"
+    ]
+  },
+  {
+    "error_id": "E031",
+    "pattern_name": "Missing Environment Variable",
+    "pattern_type": "regex",
+    "pattern": "KeyError: '[VAR]'|environment variable not set",
+    "category": "CONFIGURATION",
+    "description": "A required environment variable for the DAG/Task is missing.",
+    "resolution_step": "Define the missing environment variable in the Airflow deployment or Dockerfile.",
+    "representative_examples": [
+      "KeyError: 'DB_PASSWORD' during os.environ retrieval"
+    ]
+  },
+  {
+    "error_id": "E032",
+    "pattern_name": "Malformed CSV/Parquet File",
+    "pattern_type": "simple_string",
+    "pattern": "Malformed records|not a valid Parquet file|Error parsing line",
+    "category": "DATA_QUALITY",
+    "description": "The source data file is corrupted or does not follow the expected format.",
+    "resolution_step": "Verify the source file integrity and check for unexpected delimiters or header changes.",
+    "representative_examples": [
+      "pandas.errors.ParserError: Error tokenizing data. C error: Expected 5 fields in line 10, saw 7"
+    ]
+  },
+  {
+    "error_id": "E033",
+    "pattern_name": "GCS Blob Conflict",
+    "pattern_type": "simple_string",
+    "pattern": "412 Precondition Failed|Generation match failed",
+    "category": "STORAGE_ISSUES",
+    "description": "Conflict during file upload/download in Google Cloud Storage due to version mismatch.",
+    "resolution_step": "Check if multiple processes are trying to write to the same GCS object simultaneously.",
+    "representative_examples": [
+      "google.api_core.exceptions.PreconditionFailed: 412 Precondition Failed (Generation match failed)"
+    ]
+  }
+]

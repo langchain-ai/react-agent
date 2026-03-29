@@ -1,0 +1,20 @@
+{"id":0,"text":"E001 Required python package is missing in the execution environment. ModuleNotFoundError: No module named 'pandas' ValueError: Please install the 'db-dtypes' package to use this function"}
+{"id":1,"text":"E010 User does not have sufficient permissions to access the resource (BigQuery, Drive, etc.). google.api_core.exceptions.Forbidden: 403 Access Denied: BigQuery: Permission denied while getting Drive credentials."}
+{"id":2,"text":"E012 The query result schema does not match the destination table schema. BadRequest: 400 Provided schema does not match. Field 'amount' has changed type from INT64 to FLOAT64"}
+{"id":3,"text":"E013 Failed to automatically infer BigQuery schema from DataFrame. pyarrow.lib.ArrowTypeError: Could not convert FLOAT64 to INT64"}
+{"id":4,"text":"E014 Data delivery operation exceeded the time limit. AirflowSensorTimeout: Timeout reached DELIVERY_TIMEOUT: Execution time has exceeded the time limit"}
+{"id":5,"text":"E018 The specified source file or destination table does not exist. NotFound: 404 Not found: Table project.dataset.table FileNotFoundError: [Errno 2] No such file or directory: '/tmp/data.csv'"}
+{"id":6,"text":"E020 The process was terminated because it exceeded the available memory. MemoryError: Unable to allocate 2.4 GiB for an array with shape Container terminated with exit code 137 (OOMKilled)"}
+{"id":7,"text":"E021 API call frequency or data volume exceeded the cloud provider's quota. google.api_core.exceptions.Forbidden: 403 Quota exceeded: Your project exceeded quota for free query bytes per day"}
+{"id":8,"text":"E022 Could not connect to the database server. Server might be down or blocked by firewall. psycopg2.OperationalError: could not connect to server: Connection refused"}
+{"id":9,"text":"E023 The local disk or temporary directory is full. OSError: [Errno 28] No space left on device: '/var/lib/airflow/tmp'"}
+{"id":10,"text":"E024 The generated SQL query contains syntax errors. google.api_core.exceptions.BadRequest: 400 Syntax error: Unexpected keyword SELECT at [5:1]"}
+{"id":11,"text":"E025 SSL handshake failed while connecting to an external API/DB. [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self signed certificate"}
+{"id":12,"text":"E026 A Spark executor was terminated, often due to OOM or spot instance preemption. org.apache.spark.SparkException: Job aborted due to stage failure: ExecutorLostFailure (executor 5 exited caused by external signal)"}
+{"id":13,"text":"E027 Attempted to insert NULL into a column that has a NOT NULL constraint. sqlalchemy.exc.IntegrityError: (psycopg2.errors.NotNullViolation) column 'user_id' contains null values"}
+{"id":14,"text":"E028 The authentication token or credentials used for the service have expired. google.auth.exceptions.RefreshError: The credentials have expired and could not be refreshed"}
+{"id":15,"text":"E029 The Kubernetes pod running the task was preempted by a higher priority pod or node maintenance. AirflowException: Kubernetes pod was deleted before it could complete"}
+{"id":16,"text":"E030 A database transaction was rolled back because it was deadlocked with another process. MySQLdb.OperationalError: (1213, 'Deadlock found when trying to get lock; try restarting transaction')"}
+{"id":17,"text":"E031 A required environment variable for the DAG/Task is missing. KeyError: 'DB_PASSWORD' during os.environ retrieval"}
+{"id":18,"text":"E032 The source data file is corrupted or does not follow the expected format. pandas.errors.ParserError: Error tokenizing data. C error: Expected 5 fields in line 10, saw 7"}
+{"id":19,"text":"E033 Conflict during file upload/download in Google Cloud Storage due to version mismatch. google.api_core.exceptions.PreconditionFailed: 412 Precondition Failed (Generation match failed)"}

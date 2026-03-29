@@ -21,6 +21,9 @@ class InputState:
     messages: Annotated[Sequence[AnyMessage], add_messages] = field(
         default_factory=list
     )
+
+    raw_log: str = field(default="")
+    """The unprocessed text log for the agent to analyze."""
     """
     Messages tracking the primary execution state of the agent.
 
