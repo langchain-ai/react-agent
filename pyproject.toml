@@ -60,6 +60,11 @@ lint.ignore = [
 [tool.ruff.lint.pydocstyle]
 convention = "google"
 
+[tool.uv]
+# CVE-2026-32597: pyjwt < 2.12.0 accepts unknown `crit` header extensions.
+# Transitive via langgraph-api -> pyjwt. Remove once langgraph-api requires pyjwt>=2.12.0.
+constraint-dependencies = ["pyjwt>=2.12.0"]
+
 [dependency-groups]
 dev = [
     "anyio>=4.7.0",
