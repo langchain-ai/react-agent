@@ -69,5 +69,5 @@ constraint-dependencies = ["pyjwt>=2.12.0"]
 dev = [
     "anyio>=4.7.0",
     "langgraph-cli[inmem]>=0.4.10",
-    "pytest>=8.3.5",
+    "pytest>=9.0.3",
 ]
