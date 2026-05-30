@@ -18,6 +18,10 @@ dependencies = [
     "langchain-tavily>=0.1",
 ]
 
+[dependency-groups]
+dev = [
+    "pytest>=8.3.4",
+]
 
 [project.optional-dependencies]
 dev = ["mypy>=1.11.1", "ruff>=0.6.1"]
