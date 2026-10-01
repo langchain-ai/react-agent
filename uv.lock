@@ -1219,7 +1219,7 @@ wheels = [
 
 [[package]]
 name = "langchain-core"
-version = "1.6.4"
+version = "1.6.6"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "httpx" },
@@ -1233,14 +1233,14 @@ dependencies = [
     { name = "typing-extensions" },
     { name = "uuid-utils" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/5d/ed/a9c3711721031d3ed8cbd681f90a856538965d1036dc5dd6ed1e48dcc569/langchain_core-1.6.4.tar.gz", hash = "sha256:c1caae770d991bb6f2376bad791970bf77bb29abd1f15823fa9ea7dbac080fa0", size = 1006637, upload-time = "2026-09-21T15:51:08.174Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/18/87/9e5d393bbcec068c51becc255a15aacfd8a14ac5826179751c1c320e5258/langchain_core-1.6.6.tar.gz", hash = "sha256:67616d984c085009be2c381c2efd330d32429a58aebab295b4f51b6573964511", size = 1007227, upload-time = "2026-09-29T14:52:54.598Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/c4/f2/41435d9a5448c52a0388f75741edb979fde7415eaa820d6a42878cad7e38/langchain_core-1.6.4-py3-none-any.whl", hash = "sha256:2f940c83f787676ad4dc651d49d053c7ec34bda5a6afcd224da2863ff53a0b84", size = 571970, upload-time = "2026-09-21T15:51:06.555Z" },
+    { url = "https://files.pythonhosted.org/packages/90/10/8c00b4dc094886314c907ec7ead258dfee28948cf44175976cc4fba9aba8/langchain_core-1.6.6-py3-none-any.whl", hash = "sha256:d9a71e312ab7443701238750e04a57aefc037c4f1ec82837c8a1609d9a14a9b1", size = 572080, upload-time = "2026-09-29T14:52:53.213Z" },
 ]
 
 [[package]]
 name = "langchain-fireworks"
-version = "1.6.1"
+version = "1.6.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiohttp" },
@@ -1249,9 +1249,9 @@ dependencies = [
     { name = "openai" },
     { name = "requests" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/37/62/ad8cc57ad2741cac1c0d460961709cbe430edb99a7595db63fa30526567d/langchain_fireworks-1.6.1.tar.gz", hash = "sha256:fb89ef4c0289b23462ebbcc4442be8fdad60034ce9a9159914792edeed74eebf", size = 228378, upload-time = "2026-08-27T21:56:12.145Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/58/88/cdad1c74464d5e681433c7c16e6effc90f699bd809464622d4757944cf16/langchain_fireworks-1.6.3.tar.gz", hash = "sha256:c9a7102df09761da2cfc25b12460b086befb110153e6a4dd0957433bf9248e7a", size = 228789, upload-time = "2026-09-25T12:57:22.331Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/43/89/73ae783987256f6d37e577bc9da04cee5a97f249df191c7ce248850223b9/langchain_fireworks-1.6.1-py3-none-any.whl", hash = "sha256:e5f8ab3bdb7cf24e83e490fdf6635e1322f0e410a7e259a42cc0d771b5fc5cf3", size = 30141, upload-time = "2026-08-27T21:56:11.062Z" },
+    { url = "https://files.pythonhosted.org/packages/30/f1/e97a2de7e767f187e15521d7ad9ae5efa2e39996e5a2a76d3e80c2cb9884/langchain_fireworks-1.6.3-py3-none-any.whl", hash = "sha256:9ab3ee844598beffdffc3717f45cb104ae3e820e36563d983f8ab4d8822bd968", size = 30881, upload-time = "2026-09-25T12:57:21.18Z" },
 ]
 
 [[package]]
