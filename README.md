@@ -35,6 +35,8 @@ cp .env.example .env
 
 The primary [search tool](./src/react_agent/tools.py) [^1] used is [Tavily](https://tavily.com/). Create an API key [here](https://app.tavily.com/sign-in).
 
+An optional `check_url` tool lets the agent preflight a link (safe? reachable?) before fetching or citing it. It calls the free, keyless [Surface](https://nova-otter-delta-cloud.grok.me) preflight API by default; set `PREFLIGHT_ENDPOINT` to use another service, or remove it from `TOOLS`.
+
 ### Setup Model
 
 The defaults values for `model` are shown below:
